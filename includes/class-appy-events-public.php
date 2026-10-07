@@ -53,7 +53,8 @@ class Appy_Events_Public {
    </div>
    <aside class="appy-single-details">
     <div class="appy-event-facts">
-     <div><strong><?php esc_html_e('When','appy-events'); ?></strong><span><?php echo esc_html($this->fmt($start)); ?><?php if($end) echo ' – '.esc_html($this->fmt($end)); ?></span></div>
+     <div><strong><?php esc_html_e('Date','appy-events'); ?></strong><span><?php echo esc_html($start ? wp_date('l d/m/y',strtotime($start)) : ''); ?></span></div>
+     <div><strong><?php esc_html_e('Time','appy-events'); ?></strong><span><?php echo esc_html($start ? wp_date('g.i a',strtotime($start)) : ''); ?><?php if($end) echo ' '.esc_html__('to','appy-events').' '.esc_html(wp_date('g.i a',strtotime($end))); ?></span></div>
      <?php if($loc): ?><div><strong><?php esc_html_e('Where','appy-events'); ?></strong><span><?php echo esc_html($loc); ?></span></div><?php endif; ?>
      <div><strong><?php esc_html_e('Availability','appy-events'); ?></strong><span><?php echo esc_html($cap?sprintf(__('%d places left','appy-events'),max(0,$cap-$n)):__('Unlimited places','appy-events')); ?></span></div>
     </div>
@@ -61,7 +62,7 @@ class Appy_Events_Public {
   </div>
   <script>
 document.querySelectorAll('.appy-attendee-ticket-form').forEach(function(form){
- const qty=form.querySelector('select[name="quantity"]'),wrap=form.querySelector('.appy-attendee-fields');
+ const qty=form.querySelector('[name="quantity"]'),wrap=form.querySelector('.appy-attendee-fields');
  if(!qty||!wrap)return;
  function draw(){
   const existing=Array.from(wrap.querySelectorAll('.appy-attendee-person')).map(function(p){return Array.from(p.querySelectorAll('input')).map(function(i){return i.value;});});
@@ -72,7 +73,7 @@ document.querySelectorAll('.appy-attendee-ticket-form').forEach(function(form){
    Array.from(row.querySelectorAll('input')).forEach(function(input,j){input.value=values[j]||'';}); wrap.appendChild(row);
   }
  }
- qty.addEventListener('change',draw); draw();
+ qty.addEventListener('change',draw); qty.addEventListener('input',draw); draw();
 });
 </script>
 <?php return ob_get_clean();
