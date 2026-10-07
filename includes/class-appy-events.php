@@ -6,6 +6,7 @@ require_once APPY_EVENTS_PATH.'includes/class-appy-events-meta.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-attendees.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-settings.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-woocommerce.php';
+require_once APPY_EVENTS_PATH.'includes/class-appy-events-tickets.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-rsvp.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-operations.php';
 require_once APPY_EVENTS_PATH.'includes/class-appy-events-public.php';
