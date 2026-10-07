@@ -17,8 +17,17 @@ class Appy_Events_Public {
    <?php if($loc): ?><p><?php echo esc_html($loc); ?></p><?php endif; ?><div class="appy-public-card-foot"><span><?php echo esc_html($cap?sprintf(__('%d of %d booked','appy-events'),$n,$cap):sprintf(__('%d booked','appy-events'),$n)); ?></span><a class="appy-events-button is-secondary" href="<?php the_permalink(); ?>"><?php esc_html_e('View event','appy-events'); ?></a></div></div></article>
   <?php } wp_reset_postdata(); echo '</div>'; return ob_get_clean();
  }
+ private function is_builder_request(){
+  if(isset($_GET['elementor-preview']) || isset($_REQUEST['action']) && 0===strpos(sanitize_key(wp_unslash($_REQUEST['action'])),'elementor')) return true;
+  if(class_exists('\\Elementor\\Plugin')){
+   $plugin=\\Elementor\\Plugin::$instance;
+   if(isset($plugin->editor) && method_exists($plugin->editor,'is_edit_mode') && $plugin->editor->is_edit_mode()) return true;
+   if(isset($plugin->preview) && method_exists($plugin->preview,'is_preview_mode') && $plugin->preview->is_preview_mode()) return true;
+  }
+  return false;
+ }
  public function event_content($content){
-  if(!is_singular('appy_event')||!in_the_loop()||!is_main_query()) return $content;
+  if($this->is_builder_request()||!is_singular('appy_event')||!in_the_loop()||!is_main_query()) return $content;
   $id=get_the_ID(); $start=get_post_meta($id,'_appy_event_start',true); $end=get_post_meta($id,'_appy_event_end',true); $loc=get_post_meta($id,'_appy_event_location',true);
   $cap=absint(get_post_meta($id,'_appy_event_capacity',true)); $n=Appy_Events_Attendees::count($id); $cancelled=Appy_Events_Operations::cancelled($id); $past=Appy_Events_Operations::is_past($id); $type=get_post_meta($id,'_appy_event_type',true)?:'free';
   ob_start(); ?>
