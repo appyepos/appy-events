@@ -24,7 +24,7 @@ class Appy_Events_Frontend {
     }
 
     private function dashboard_url($args = []) {
-        $url = remove_query_arg(['appy_action','event_id','appy_saved','attendee_added','attendee_removed','attendee_error','message_sent','message_error','event_deleted']);
+        $url = remove_query_arg(['appy_action','event_id','appy_saved','attendee_added','attendee_removed','attendee_error','message_sent','message_error','event_deleted','event_cancelled']);
         return add_query_arg($args, $url);
     }
 
@@ -57,6 +57,7 @@ class Appy_Events_Frontend {
 
         ob_start(); ?>
         <div class="appy-events-dashboard">
+            <?php if (isset($_GET['event_cancelled'])) : ?><div class="appy-events-success"><?php esc_html_e('Event cancelled and attendees notified.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['event_deleted'])) : ?><div class="appy-events-success"><?php esc_html_e('Event deleted.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['appy_saved'])) : ?>
                 <div class="appy-events-success"><?php esc_html_e('Event saved successfully.', 'appy-events'); ?></div>
@@ -237,7 +238,7 @@ class Appy_Events_Frontend {
                         <?php if ($location) echo esc_html($location); ?>
                     </p>
                 </div>
-                <a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url()); ?>"><?php esc_html_e('Back to events', 'appy-events'); ?></a>
+                <div class="appy-head-actions"><a class="appy-events-button is-secondary" href="<?php echo esc_url(wp_nonce_url(admin_url('admin-post.php?action=appy_event_export&event_id='.$event_id),'appy_export_'.$event_id)); ?>"><?php esc_html_e('Export CSV','appy-events'); ?></a><a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url()); ?>"><?php esc_html_e('Back to events', 'appy-events'); ?></a></div>
             </div>
 
             <div class="appy-events-summary appy-attendee-summary">
@@ -265,7 +266,7 @@ class Appy_Events_Frontend {
             <section class="appy-event-form-card appy-message-attendees">
                 <h3><?php esc_html_e('Message attendees', 'appy-events'); ?></h3>
                 <p class="appy-message-intro"><?php esc_html_e('Send an update to everyone currently booked onto this event. Each attendee receives a separate email.', 'appy-events'); ?></p>
-                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(sprintf(__('Send this message to all %d attendees?','appy-events'),$count)); ?>')">
                     <input type="hidden" name="action" value="appy_event_message_attendees">
                     <input type="hidden" name="event_id" value="<?php echo esc_attr($event_id); ?>">
                     <input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event_id])); ?>">
@@ -320,18 +321,18 @@ class Appy_Events_Frontend {
         $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
 
         if (!$name || !is_email($email)) {
-            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('Please enter a valid name and email.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('attendee_error', __('Please enter a valid name and email.', 'appy-events'), $return));
             exit;
         }
 
         $capacity = absint(get_post_meta($event_id, '_appy_event_capacity', true));
         if ($capacity && Appy_Events_Attendees::count($event_id) >= $capacity) {
-            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('This event is already full.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('attendee_error', __('This event is already full.', 'appy-events'), $return));
             exit;
         }
 
         if (Appy_Events_Attendees::email_exists($event_id, $email)) {
-            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('That email address is already booked onto this event.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('attendee_error', __('That email address is already booked onto this event.', 'appy-events'), $return));
             exit;
         }
 
@@ -355,13 +356,13 @@ class Appy_Events_Frontend {
         $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
 
         if (!$subject || !$body) {
-            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('Please enter a subject and message.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('message_error', __('Please enter a subject and message.', 'appy-events'), $return));
             exit;
         }
 
         $attendees = Appy_Events_Attendees::get_for_event($event_id);
         if (!$attendees) {
-            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('There are no attendees to message.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('message_error', __('There are no attendees to message.', 'appy-events'), $return));
             exit;
         }
 
@@ -374,7 +375,7 @@ class Appy_Events_Frontend {
         }
 
         if (!$sent) {
-            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('The message could not be sent. Please check the website email configuration.', 'appy-events')), $return));
+            wp_safe_redirect(add_query_arg('message_error', __('The message could not be sent. Please check the website email configuration.', 'appy-events'), $return));
             exit;
         }
 
@@ -440,6 +441,7 @@ class Appy_Events_Frontend {
                 <?php if ('publish' === $event->post_status) : ?><a href="<?php echo esc_url(get_permalink($event)); ?>"><?php esc_html_e('View', 'appy-events'); ?></a><?php endif; ?>
                 <a href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Attendees', 'appy-events'); ?></a>
                 <a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'edit', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Edit', 'appy-events'); ?></a>
+                <?php if (!Appy_Events_Operations::cancelled($event->ID)) : ?><form class="appy-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Cancel this event and email all attendees?','appy-events')); ?>')"><input type="hidden" name="action" value="appy_event_cancel"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->ID); ?>"><input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url()); ?>"><?php wp_nonce_field('appy_cancel_event_'.$event->ID,'appy_cancel_nonce'); ?><button class="appy-link-danger" type="submit"><?php esc_html_e('Cancel event','appy-events'); ?></button></form><?php else : ?><span class="appy-event-type"><?php esc_html_e('Cancelled','appy-events'); ?></span><?php endif; ?>
                 <form class="appy-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Delete this event? This cannot be undone.','appy-events')); ?>')"><input type="hidden" name="action" value="appy_event_delete"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->ID); ?>"><input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url()); ?>"><?php wp_nonce_field('appy_delete_event_'.$event->ID,'appy_delete_nonce'); ?><button class="appy-link-danger" type="submit"><?php esc_html_e('Delete','appy-events'); ?></button></form>
             </div>
         </article>
