@@ -1,256 +1,187 @@
 /* Appy Events public styles. Kept theme-neutral so it can be reused across sites. */
 .appy-events-dashboard {
-    --appy-border: #e3e5e8;
-    --appy-muted: #667085;
-    --appy-text: #161b22;
-    --appy-surface: #fff;
-    --appy-soft: #f6f7f8;
-    color: var(--appy-text);
+    --appy-border: #e3e5e8; --appy-muted: #667085; --appy-text: #161b22; --appy-surface: #fff; --appy-soft: #f6f7f8; color: var(--appy-text);
+}
+.appy-events-dashboard-head { display:flex; justify-content:space-between; align-items:flex-start; gap:24px; margin-bottom:24px; }
+.appy-events-dashboard-head h2 { margin:2px 0 6px; font-size:clamp(28px,4vw,42px); line-height:1.05; }
+.appy-events-dashboard-head p { margin:0; color:var(--appy-muted); }
+.appy-events-kicker { display:block; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--appy-muted); }
+.appy-events-button { display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:9px 16px; border:1px solid #161b22; border-radius:7px; background:#161b22; color:#fff!important; font-weight:700; text-decoration:none!important; white-space:nowrap; }
+.appy-events-button.is-secondary { min-height:36px; padding:6px 12px; background:#fff; color:#161b22!important; }
+.appy-events-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; margin-bottom:30px; }
+.appy-events-summary>div { padding:18px; border:1px solid var(--appy-border); border-radius:10px; background:var(--appy-surface); }
+.appy-events-summary strong,.appy-events-summary span { display:block; }
+.appy-events-summary strong { margin-bottom:2px; font-size:28px; line-height:1; }
+.appy-events-summary span { color:var(--appy-muted); font-size:13px; }
+.appy-events-section { margin:0 0 28px; }
+.appy-events-section-head { margin-bottom:10px; }
+.appy-events-section h3,.appy-events-past summary { margin:0; font-size:18px; font-weight:750; }
+.appy-events-list { border:1px solid var(--appy-border); border-radius:10px; overflow:hidden; background:var(--appy-surface); }
+.appy-event-card { display:grid; grid-template-columns:58px minmax(0,1fr) auto; align-items:center; gap:16px; padding:16px; border-bottom:1px solid var(--appy-border); }
+.appy-event-card:last-child { border-bottom:0; }
+.appy-event-date { text-align:center; border-right:1px solid var(--appy-border); padding-right:16px; }
+.appy-event-date strong,.appy-event-date span { display:block; }
+.appy-event-date strong { font-size:24px; line-height:1; }
+.appy-event-date span { margin-top:4px; color:var(--appy-muted); font-size:12px; font-weight:700; text-transform:uppercase; }
+.appy-event-title-row { display:flex; align-items:center; gap:10px; }
+.appy-event-title-row h4 { margin:0; font-size:17px; }
+.appy-event-type { padding:3px 7px; border-radius:999px; background:var(--appy-soft); color:var(--appy-muted); font-size:11px; font-weight:700; }
+.appy-event-meta { display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:6px; color:var(--appy-muted); font-size:13px; }
+.appy-event-actions { display:flex; align-items:center; gap:12px; }
+.appy-event-actions>a:not(.appy-events-button) { font-weight:650; }
+.appy-events-empty,.appy-events-notice { padding:18px; border:1px solid var(--appy-border); border-radius:10px; background:var(--appy-soft); }
+.appy-events-notice.is-error { border-color:#e6b8b8; }
+.appy-events-past { margin-top:28px; }
+.appy-events-past summary { margin-bottom:12px; cursor:pointer; }
+.appy-events-rsvp input { max-width:100%; }
+@media(max-width:700px){
+ .appy-events-dashboard-head{display:block}.appy-events-dashboard-head .appy-events-button{margin-top:16px}.appy-events-summary{grid-template-columns:repeat(3,1fr)}.appy-events-summary>div{padding:14px 10px}.appy-events-summary strong{font-size:22px}.appy-event-card{grid-template-columns:48px minmax(0,1fr);gap:12px}.appy-event-date{padding-right:12px}.appy-event-actions{grid-column:1/-1;justify-content:flex-end;padding-top:10px;border-top:1px solid var(--appy-border)}.appy-event-title-row{align-items:flex-start;flex-direction:column;gap:5px}
 }
 
-.appy-events-dashboard-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 24px;
-    margin-bottom: 24px;
-}
 
-.appy-events-dashboard-head h2 {
-    margin: 2px 0 6px;
-    font-size: clamp(28px, 4vw, 42px);
-    line-height: 1.05;
-}
-
-.appy-events-dashboard-head p {
-    margin: 0;
-    color: var(--appy-muted);
-}
-
-.appy-events-kicker {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--appy-muted);
-}
-
-.appy-events-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 42px;
-    padding: 9px 16px;
-    border: 1px solid #161b22;
-    border-radius: 7px;
-    background: #161b22;
-    color: #fff !important;
-    font-weight: 700;
-    text-decoration: none !important;
-    white-space: nowrap;
-}
-
-.appy-events-button.is-secondary {
-    min-height: 36px;
-    padding: 6px 12px;
-    background: #fff;
-    color: #161b22 !important;
-}
-
-.appy-events-summary {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-    margin-bottom: 30px;
-}
-
-.appy-events-summary > div {
-    padding: 18px;
-    border: 1px solid var(--appy-border);
-    border-radius: 10px;
-    background: var(--appy-surface);
-}
-
-.appy-events-summary strong,
-.appy-events-summary span {
-    display: block;
-}
-
-.appy-events-summary strong {
-    margin-bottom: 2px;
-    font-size: 28px;
-    line-height: 1;
-}
-
-.appy-events-summary span {
-    color: var(--appy-muted);
-    font-size: 13px;
-}
-
-.appy-events-section {
-    margin: 0 0 28px;
-}
-
-.appy-events-section-head {
-    margin-bottom: 10px;
-}
-
-.appy-events-section h3,
-.appy-events-past summary {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 750;
-}
-
-.appy-events-list {
-    border: 1px solid var(--appy-border);
-    border-radius: 10px;
-    overflow: hidden;
-    background: var(--appy-surface);
-}
-
-.appy-event-card {
-    display: grid;
-    grid-template-columns: 58px minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 16px;
-    padding: 16px;
-    border-bottom: 1px solid var(--appy-border);
-}
-
-.appy-event-card:last-child {
-    border-bottom: 0;
-}
-
-.appy-event-date {
-    text-align: center;
-    border-right: 1px solid var(--appy-border);
-    padding-right: 16px;
-}
-
-.appy-event-date strong,
-.appy-event-date span {
-    display: block;
-}
-
-.appy-event-date strong {
-    font-size: 24px;
-    line-height: 1;
-}
-
-.appy-event-date span {
-    margin-top: 4px;
-    color: var(--appy-muted);
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.appy-event-title-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.appy-event-title-row h4 {
-    margin: 0;
-    font-size: 17px;
-}
-
-.appy-event-type {
-    padding: 3px 7px;
-    border-radius: 999px;
-    background: var(--appy-soft);
-    color: var(--appy-muted);
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.appy-event-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px 16px;
-    margin-top: 6px;
-    color: var(--appy-muted);
-    font-size: 13px;
-}
-
-.appy-event-actions {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.appy-event-actions > a:not(.appy-events-button) {
+/* Front-end event editor */
+.appy-events-success {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid #b8dfc2;
+    border-radius: 8px;
+    background: #effaf2;
+    color: #176b2c;
     font-weight: 650;
 }
 
-.appy-events-empty,
-.appy-events-notice {
-    padding: 18px;
+.appy-event-form {
+    display: grid;
+    gap: 18px;
+}
+
+.appy-event-form-card {
+    padding: 22px;
     border: 1px solid var(--appy-border);
     border-radius: 10px;
-    background: var(--appy-soft);
+    background: var(--appy-surface);
 }
 
-.appy-events-notice.is-error {
-    border-color: #e6b8b8;
+.appy-event-form-card h3 {
+    margin: 0 0 18px;
+    font-size: 18px;
 }
 
-.appy-events-past {
-    margin-top: 28px;
+.appy-event-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
 }
 
-.appy-events-past summary {
-    margin-bottom: 12px;
+.appy-field {
+    margin: 0;
+}
+
+.appy-field.is-full {
+    grid-column: 1 / -1;
+}
+
+.appy-field label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 700;
+}
+
+.appy-field label > span {
+    color: #b42318;
+}
+
+.appy-field input[type="text"],
+.appy-field input[type="number"],
+.appy-field input[type="datetime-local"],
+.appy-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #cfd4dc;
+    border-radius: 7px;
+    background: #fff;
+    color: var(--appy-text);
+    font: inherit;
+}
+
+.appy-field textarea {
+    min-height: 150px;
+    resize: vertical;
+}
+
+.appy-field small {
+    display: block;
+    margin-top: 6px;
+    color: var(--appy-muted);
+}
+
+.appy-event-current-image {
+    max-width: 280px;
+    margin-bottom: 15px;
+}
+
+.appy-event-current-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.appy-booking-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.appy-booking-options label {
+    display: block;
+    padding: 16px;
+    border: 1px solid var(--appy-border);
+    border-radius: 8px;
     cursor: pointer;
 }
 
-.appy-events-rsvp input {
-    max-width: 100%;
+.appy-booking-options label.is-disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.appy-booking-options strong {
+    margin-left: 5px;
+}
+
+.appy-booking-options span {
+    display: block;
+    margin: 7px 0 0 25px;
+    color: var(--appy-muted);
+    font-size: 13px;
+}
+
+.appy-event-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 18px;
+    padding-top: 4px;
+}
+
+.appy-event-form-actions > a {
+    font-weight: 650;
 }
 
 @media (max-width: 700px) {
-    .appy-events-dashboard-head {
-        display: block;
+    .appy-event-form-grid,
+    .appy-booking-options {
+        grid-template-columns: 1fr;
     }
 
-    .appy-events-dashboard-head .appy-events-button {
-        margin-top: 16px;
+    .appy-event-form-card {
+        padding: 17px;
     }
 
-    .appy-events-summary {
-        grid-template-columns: repeat(3, 1fr);
-    }
-
-    .appy-events-summary > div {
-        padding: 14px 10px;
-    }
-
-    .appy-events-summary strong {
-        font-size: 22px;
-    }
-
-    .appy-event-card {
-        grid-template-columns: 48px minmax(0, 1fr);
-        gap: 12px;
-    }
-
-    .appy-event-date {
-        padding-right: 12px;
-    }
-
-    .appy-event-actions {
-        grid-column: 1 / -1;
-        justify-content: flex-end;
-        padding-top: 10px;
-        border-top: 1px solid var(--appy-border);
-    }
-
-    .appy-event-title-row {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 5px;
+    .appy-event-form-actions {
+        justify-content: space-between;
     }
 }
