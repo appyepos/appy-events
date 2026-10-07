@@ -5,6 +5,7 @@ require_once APPY_EVENTS_PATH . 'includes/class-appy-events-post-type.php';
 require_once APPY_EVENTS_PATH . 'includes/class-appy-events-meta.php';
 require_once APPY_EVENTS_PATH . 'includes/class-appy-events-attendees.php';
 require_once APPY_EVENTS_PATH . 'includes/class-appy-events-rsvp.php';
+require_once APPY_EVENTS_PATH . 'includes/class-appy-events-admin.php';
 
 final class Appy_Events {
     private static $instance = null;
@@ -19,6 +20,7 @@ final class Appy_Events {
         new Appy_Events_Meta();
         new Appy_Events_Attendees();
         new Appy_Events_RSVP();
+        new Appy_Events_Admin();
     }
 
     public static function activate() {
