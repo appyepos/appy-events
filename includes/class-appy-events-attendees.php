@@ -32,4 +32,33 @@ class Appy_Events_Attendees {
         global $wpdb;
         return (int) $wpdb->get_var($wpdb->prepare('SELECT COUNT(*) FROM ' . self::table() . ' WHERE event_id = %d', $event_id));
     }
+
+    public static function get_for_event($event_id) {
+        global $wpdb;
+        return $wpdb->get_results($wpdb->prepare(
+            'SELECT * FROM ' . self::table() . ' WHERE event_id = %d ORDER BY created_at DESC, id DESC',
+            $event_id
+        ));
+    }
+
+    public static function email_exists($event_id, $email) {
+        global $wpdb;
+        return (bool) $wpdb->get_var($wpdb->prepare(
+            'SELECT id FROM ' . self::table() . ' WHERE event_id = %d AND email = %s LIMIT 1',
+            $event_id,
+            $email
+        ));
+    }
+
+    public static function add($event_id, $name, $email, $source = 'manual', $order_id = null) {
+        global $wpdb;
+        return $wpdb->insert(self::table(), [
+            'event_id' => absint($event_id),
+            'name' => sanitize_text_field($name),
+            'email' => sanitize_email($email),
+            'source' => sanitize_key($source),
+            'order_id' => $order_id ? absint($order_id) : null,
+            'created_at' => current_time('mysql'),
+        ], ['%d', '%s', '%s', '%s', '%d', '%s']);
+    }
 }
