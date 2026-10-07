@@ -20,6 +20,7 @@ class Appy_Events_Meta {
         $capacity = get_post_meta($post->ID, '_appy_event_capacity', true);
         $type = get_post_meta($post->ID, '_appy_event_type', true) ?: 'free';
         $woocommerce = class_exists('WooCommerce');
+        $price = get_post_meta($post->ID, '_appy_event_price', true);
         ?>
         <div class="appy-event-fields">
             <div class="appy-event-grid">
@@ -62,6 +63,7 @@ class Appy_Events_Meta {
                         </span>
                     </label>
                 </div>
+                <?php if($woocommerce): ?><p class="appy-event-field"><label for="appy-event-price"><?php esc_html_e('Ticket price (£)','appy-events'); ?></label><input id="appy-event-price" type="number" min="0" step="0.01" name="_appy_event_price" value="<?php echo esc_attr($price); ?>"></p><?php endif; ?>
             </div>
         </div>
         <?php
@@ -81,5 +83,8 @@ class Appy_Events_Meta {
 
         $type = isset($_POST['_appy_event_type']) && 'paid' === $_POST['_appy_event_type'] && class_exists('WooCommerce') ? 'paid' : 'free';
         update_post_meta($post_id, '_appy_event_type', $type);
+        $price=isset($_POST['_appy_event_price'])?(float)wc_format_decimal(wp_unslash($_POST['_appy_event_price'])):0;
+        update_post_meta($post_id,'_appy_event_price',$price);
+        if('paid'===$type && $price>0 && class_exists('Appy_Events_WooCommerce')) Appy_Events_WooCommerce::sync_product($post_id,$price);
     }
 }
