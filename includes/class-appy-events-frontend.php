@@ -20,11 +20,11 @@ class Appy_Events_Frontend {
     }
 
     private function can_manage() {
-        return is_user_logged_in() && current_user_can('edit_posts');
+        return is_user_logged_in() && current_user_can('manage_appy_events');
     }
 
     private function dashboard_url($args = []) {
-        $url = remove_query_arg(['appy_action','event_id','appy_saved','attendee_added','attendee_removed','attendee_error','message_sent','message_error','event_deleted','event_cancelled']);
+        $url = remove_query_arg(['appy_action','event_id','appy_saved','attendee_added','attendee_removed','attendee_error','message_sent','message_error','event_deleted','event_cancelled','appy_error']);
         return add_query_arg($args, $url);
     }
 
@@ -37,12 +37,8 @@ class Appy_Events_Frontend {
         if ('attendees' === $action) return $this->attendees_view();
 
         $events = get_posts([
-            'post_type' => 'appy_event',
-            'post_status' => ['publish', 'draft', 'pending', 'future', 'private'],
-            'posts_per_page' => -1,
-            'meta_key' => '_appy_event_start',
-            'orderby' => 'meta_value',
-            'order' => 'ASC',
+            'post_type'=>'appy_event','post_status'=>['publish','draft','pending','future','private'],'posts_per_page'=>-1,
+            'orderby'=>'date','order'=>'DESC'
         ]);
 
         $upcoming = []; $past = []; $undated = [];
@@ -57,6 +53,7 @@ class Appy_Events_Frontend {
 
         ob_start(); ?>
         <div class="appy-events-dashboard">
+            <?php if (isset($_GET['appy_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['appy_error']))); ?></strong></div><?php endif; ?>
             <?php if (isset($_GET['event_cancelled'])) : ?><div class="appy-events-success"><?php esc_html_e('Event cancelled and attendees notified.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['event_deleted'])) : ?><div class="appy-events-success"><?php esc_html_e('Event deleted.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['appy_saved'])) : ?>
@@ -106,6 +103,7 @@ class Appy_Events_Frontend {
 
         ob_start(); ?>
         <div class="appy-events-dashboard appy-event-editor">
+            <?php if (isset($_GET['appy_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['appy_error']))); ?></strong></div><?php endif; ?>
             <div class="appy-events-dashboard-head">
                 <div>
                     <span class="appy-events-kicker"><?php esc_html_e('Event management', 'appy-events'); ?></span>
@@ -136,7 +134,7 @@ class Appy_Events_Frontend {
 
                 <section class="appy-event-form-card">
                     <h3><?php esc_html_e('Event image', 'appy-events'); ?></h3>
-                    <?php if ($image) : ?><div class="appy-event-current-image"><img src="<?php echo esc_url($image); ?>" alt=""></div><?php endif; ?>
+                    <?php if ($image) : ?><div class="appy-event-current-image"><img src="<?php echo esc_url($image); ?>" alt=""><label class="appy-remove-image"><input type="checkbox" name="remove_event_image" value="1"> <?php esc_html_e('Remove current image','appy-events'); ?></label></div><?php endif; ?>
                     <p class="appy-field"><label><?php echo esc_html($image ? __('Replace image', 'appy-events') : __('Upload image', 'appy-events')); ?></label><input type="file" name="event_image" accept="image/jpeg,image/png,image/webp"></p>
                 </section>
 
@@ -192,6 +190,7 @@ class Appy_Events_Frontend {
         update_post_meta($saved_id, '_appy_event_price', $price);
         if ('paid' === $type && $price > 0) Appy_Events_WooCommerce::sync_product($saved_id, $price);
 
+        if ($event_id && !empty($_POST['remove_event_image'])) delete_post_thumbnail($saved_id);
         if (!empty($_FILES['event_image']['name'])) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
             require_once ABSPATH . 'wp-admin/includes/media.php';
@@ -201,6 +200,9 @@ class Appy_Events_Frontend {
         }
 
         $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
+        if ('paid' === $type && $price <= 0) {
+            wp_safe_redirect(add_query_arg('appy_error', rawurlencode(__('Paid events require a ticket price.','appy-events')), $this->dashboard_url(['appy_action'=>'edit','event_id'=>$saved_id]))); exit;
+        }
         wp_safe_redirect(add_query_arg('appy_saved', '1', $return));
         exit;
     }
