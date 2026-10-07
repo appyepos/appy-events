@@ -21,7 +21,7 @@ class Appy_Events_Post_Type {
             'menu_icon' => 'dashicons-calendar-alt',
             'supports' => ['title','editor','thumbnail','excerpt','elementor'],
             'has_archive' => false,
-            'rewrite' => ['slug' => 'events'],
+            'rewrite' => ['slug' => 'event', 'with_front' => false],
         ]);
     }
 }
