@@ -7,6 +7,7 @@ class Appy_Events_Frontend {
         add_action('wp_enqueue_scripts', [$this, 'assets']);
         add_action('admin_post_appy_event_frontend_save', [$this, 'save_event']);
         add_action('admin_post_appy_event_attendee_add', [$this, 'add_attendee']);
+        add_action('admin_post_appy_event_message_attendees', [$this, 'message_attendees']);
     }
 
     public function assets() {
@@ -21,7 +22,7 @@ class Appy_Events_Frontend {
     }
 
     private function dashboard_url($args = []) {
-        $url = remove_query_arg(['appy_action', 'event_id', 'appy_saved', 'attendee_added', 'attendee_error']);
+        $url = remove_query_arg(['appy_action', 'event_id', 'appy_saved', 'attendee_added', 'attendee_error', 'message_sent', 'message_error']);
         return add_query_arg($args, $url);
     }
 
@@ -212,6 +213,8 @@ class Appy_Events_Frontend {
         <div class="appy-events-dashboard appy-attendees-view">
             <?php if (isset($_GET['attendee_added'])) : ?><div class="appy-events-success"><?php esc_html_e('Attendee added successfully.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['attendee_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['attendee_error']))); ?></strong></div><?php endif; ?>
+            <?php if (isset($_GET['message_sent'])) : ?><div class="appy-events-success"><?php printf(esc_html__('Message sent to %d attendee(s).', 'appy-events'), absint($_GET['message_sent'])); ?></div><?php endif; ?>
+            <?php if (isset($_GET['message_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['message_error']))); ?></strong></div><?php endif; ?>
 
             <div class="appy-events-dashboard-head">
                 <div>
@@ -246,6 +249,24 @@ class Appy_Events_Frontend {
                     </div>
                 </form>
             </section>
+
+            <?php if ($attendees) : ?>
+            <section class="appy-event-form-card appy-message-attendees">
+                <h3><?php esc_html_e('Message attendees', 'appy-events'); ?></h3>
+                <p class="appy-message-intro"><?php esc_html_e('Send an update to everyone currently booked onto this event. Each attendee receives a separate email.', 'appy-events'); ?></p>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="appy_event_message_attendees">
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event_id); ?>">
+                    <input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event_id])); ?>">
+                    <?php wp_nonce_field('appy_event_message_attendees_' . $event_id, 'appy_message_nonce'); ?>
+                    <div class="appy-message-fields">
+                        <p class="appy-field"><label><?php esc_html_e('Subject', 'appy-events'); ?> <span>*</span></label><input type="text" name="message_subject" value="<?php echo esc_attr(sprintf(__('Update about %s', 'appy-events'), get_the_title($event))); ?>" required></p>
+                        <p class="appy-field"><label><?php esc_html_e('Message', 'appy-events'); ?> <span>*</span></label><textarea name="message_body" rows="6" required></textarea></p>
+                    </div>
+                    <div class="appy-message-actions"><span><?php printf(esc_html__('%d recipient(s)', 'appy-events'), $count); ?></span><button class="appy-events-button" type="submit"><?php esc_html_e('Send message', 'appy-events'); ?></button></div>
+                </form>
+            </section>
+            <?php endif; ?>
 
             <section class="appy-attendee-list-section">
                 <div class="appy-events-section-head"><h3><?php printf(esc_html__('Attendees (%d)', 'appy-events'), $count); ?></h3></div>
@@ -304,6 +325,48 @@ class Appy_Events_Frontend {
 
         Appy_Events_Attendees::add($event_id, $name, $email, 'manual');
         wp_safe_redirect(add_query_arg('attendee_added', '1', $return));
+        exit;
+    }
+
+
+    public function message_attendees() {
+        if (!$this->can_manage()) wp_die(esc_html__('You do not have permission to message attendees.', 'appy-events'));
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $nonce = isset($_POST['appy_message_nonce']) ? sanitize_text_field(wp_unslash($_POST['appy_message_nonce'])) : '';
+        if (!$event_id || !wp_verify_nonce($nonce, 'appy_event_message_attendees_' . $event_id) || 'appy_event' !== get_post_type($event_id) || !current_user_can('edit_post', $event_id)) {
+            wp_die(esc_html__('Invalid message request.', 'appy-events'));
+        }
+
+        $subject = isset($_POST['message_subject']) ? sanitize_text_field(wp_unslash($_POST['message_subject'])) : '';
+        $body = isset($_POST['message_body']) ? sanitize_textarea_field(wp_unslash($_POST['message_body'])) : '';
+        $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
+
+        if (!$subject || !$body) {
+            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('Please enter a subject and message.', 'appy-events')), $return));
+            exit;
+        }
+
+        $attendees = Appy_Events_Attendees::get_for_event($event_id);
+        if (!$attendees) {
+            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('There are no attendees to message.', 'appy-events')), $return));
+            exit;
+        }
+
+        $sent = 0;
+        $site_name = wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
+        foreach ($attendees as $attendee) {
+            if (!is_email($attendee->email)) continue;
+            $message = sprintf(__("Hi %s,\n\n%s\n\n%s", 'appy-events'), $attendee->name, $body, $site_name);
+            if (wp_mail($attendee->email, $subject, $message)) $sent++;
+        }
+
+        if (!$sent) {
+            wp_safe_redirect(add_query_arg('message_error', rawurlencode(__('The message could not be sent. Please check the website email configuration.', 'appy-events')), $return));
+            exit;
+        }
+
+        wp_safe_redirect(add_query_arg('message_sent', $sent, $return));
         exit;
     }
 
