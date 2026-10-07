@@ -6,6 +6,7 @@ class Appy_Events_Frontend {
         add_shortcode('appy_events_dashboard', [$this, 'dashboard']);
         add_action('wp_enqueue_scripts', [$this, 'assets']);
         add_action('admin_post_appy_event_frontend_save', [$this, 'save_event']);
+        add_action('admin_post_appy_event_attendee_add', [$this, 'add_attendee']);
     }
 
     public function assets() {
@@ -20,7 +21,7 @@ class Appy_Events_Frontend {
     }
 
     private function dashboard_url($args = []) {
-        $url = remove_query_arg(['appy_action', 'event_id', 'appy_saved']);
+        $url = remove_query_arg(['appy_action', 'event_id', 'appy_saved', 'attendee_added', 'attendee_error']);
         return add_query_arg($args, $url);
     }
 
@@ -30,6 +31,7 @@ class Appy_Events_Frontend {
 
         $action = isset($_GET['appy_action']) ? sanitize_key(wp_unslash($_GET['appy_action'])) : '';
         if (in_array($action, ['add', 'edit'], true)) return $this->event_form($action);
+        if ('attendees' === $action) return $this->attendees_view();
 
         $events = get_posts([
             'post_type' => 'appy_event',
@@ -191,6 +193,120 @@ class Appy_Events_Frontend {
         exit;
     }
 
+
+    private function attendees_view() {
+        $event_id = isset($_GET['event_id']) ? absint($_GET['event_id']) : 0;
+        $event = $event_id ? get_post($event_id) : null;
+        if (!$event || 'appy_event' !== $event->post_type || !current_user_can('edit_post', $event_id)) {
+            return '<div class="appy-events-notice is-error">' . esc_html__('You cannot manage attendees for this event.', 'appy-events') . '</div>';
+        }
+
+        $attendees = Appy_Events_Attendees::get_for_event($event_id);
+        $capacity = absint(get_post_meta($event_id, '_appy_event_capacity', true));
+        $start = get_post_meta($event_id, '_appy_event_start', true);
+        $location = get_post_meta($event_id, '_appy_event_location', true);
+        $count = count($attendees);
+        $remaining = $capacity ? max(0, $capacity - $count) : null;
+
+        ob_start(); ?>
+        <div class="appy-events-dashboard appy-attendees-view">
+            <?php if (isset($_GET['attendee_added'])) : ?><div class="appy-events-success"><?php esc_html_e('Attendee added successfully.', 'appy-events'); ?></div><?php endif; ?>
+            <?php if (isset($_GET['attendee_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['attendee_error']))); ?></strong></div><?php endif; ?>
+
+            <div class="appy-events-dashboard-head">
+                <div>
+                    <span class="appy-events-kicker"><?php esc_html_e('Attendees', 'appy-events'); ?></span>
+                    <h2><?php echo esc_html(get_the_title($event)); ?></h2>
+                    <p>
+                        <?php if ($start) echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($start))); ?>
+                        <?php if ($start && $location) echo ' · '; ?>
+                        <?php if ($location) echo esc_html($location); ?>
+                    </p>
+                </div>
+                <a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url()); ?>"><?php esc_html_e('Back to events', 'appy-events'); ?></a>
+            </div>
+
+            <div class="appy-events-summary appy-attendee-summary">
+                <div><strong><?php echo esc_html($count); ?></strong><span><?php esc_html_e('Booked', 'appy-events'); ?></span></div>
+                <div><strong><?php echo esc_html($capacity ?: '∞'); ?></strong><span><?php esc_html_e('Capacity', 'appy-events'); ?></span></div>
+                <div><strong><?php echo esc_html(null === $remaining ? '∞' : $remaining); ?></strong><span><?php esc_html_e('Places left', 'appy-events'); ?></span></div>
+            </div>
+
+            <section class="appy-event-form-card appy-add-attendee">
+                <h3><?php esc_html_e('Add attendee', 'appy-events'); ?></h3>
+                <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+                    <input type="hidden" name="action" value="appy_event_attendee_add">
+                    <input type="hidden" name="event_id" value="<?php echo esc_attr($event_id); ?>">
+                    <input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event_id])); ?>">
+                    <?php wp_nonce_field('appy_event_attendee_add_' . $event_id, 'appy_attendee_nonce'); ?>
+                    <div class="appy-add-attendee-grid">
+                        <p class="appy-field"><label><?php esc_html_e('Name', 'appy-events'); ?> <span>*</span></label><input type="text" name="attendee_name" required></p>
+                        <p class="appy-field"><label><?php esc_html_e('Email', 'appy-events'); ?> <span>*</span></label><input type="email" name="attendee_email" required></p>
+                        <button class="appy-events-button" type="submit"><?php esc_html_e('Add attendee', 'appy-events'); ?></button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="appy-attendee-list-section">
+                <div class="appy-events-section-head"><h3><?php printf(esc_html__('Attendees (%d)', 'appy-events'), $count); ?></h3></div>
+                <?php if (!$attendees) : ?>
+                    <div class="appy-events-empty"><?php esc_html_e('No attendees have booked yet.', 'appy-events'); ?></div>
+                <?php else : ?>
+                    <div class="appy-attendee-table-wrap">
+                        <table class="appy-attendee-table">
+                            <thead><tr><th><?php esc_html_e('Name', 'appy-events'); ?></th><th><?php esc_html_e('Email', 'appy-events'); ?></th><th><?php esc_html_e('Booking', 'appy-events'); ?></th><th><?php esc_html_e('Booked', 'appy-events'); ?></th></tr></thead>
+                            <tbody>
+                            <?php foreach ($attendees as $attendee) : ?>
+                                <tr>
+                                    <td><strong><?php echo esc_html($attendee->name); ?></strong></td>
+                                    <td><a href="mailto:<?php echo esc_attr($attendee->email); ?>"><?php echo esc_html($attendee->email); ?></a></td>
+                                    <td><span class="appy-event-type"><?php echo esc_html('manual' === $attendee->source ? __('Manual', 'appy-events') : ('paid' === $attendee->source ? __('Paid ticket', 'appy-events') : __('RSVP', 'appy-events'))); ?></span></td>
+                                    <td><?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($attendee->created_at))); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </div>
+        <?php return ob_get_clean();
+    }
+
+    public function add_attendee() {
+        if (!$this->can_manage()) wp_die(esc_html__('You do not have permission to manage attendees.', 'appy-events'));
+
+        $event_id = isset($_POST['event_id']) ? absint($_POST['event_id']) : 0;
+        $nonce = isset($_POST['appy_attendee_nonce']) ? sanitize_text_field(wp_unslash($_POST['appy_attendee_nonce'])) : '';
+        if (!$event_id || !wp_verify_nonce($nonce, 'appy_event_attendee_add_' . $event_id) || 'appy_event' !== get_post_type($event_id) || !current_user_can('edit_post', $event_id)) {
+            wp_die(esc_html__('Invalid attendee request.', 'appy-events'));
+        }
+
+        $name = isset($_POST['attendee_name']) ? sanitize_text_field(wp_unslash($_POST['attendee_name'])) : '';
+        $email = isset($_POST['attendee_email']) ? sanitize_email(wp_unslash($_POST['attendee_email'])) : '';
+        $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
+
+        if (!$name || !is_email($email)) {
+            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('Please enter a valid name and email.', 'appy-events')), $return));
+            exit;
+        }
+
+        $capacity = absint(get_post_meta($event_id, '_appy_event_capacity', true));
+        if ($capacity && Appy_Events_Attendees::count($event_id) >= $capacity) {
+            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('This event is already full.', 'appy-events')), $return));
+            exit;
+        }
+
+        if (Appy_Events_Attendees::email_exists($event_id, $email)) {
+            wp_safe_redirect(add_query_arg('attendee_error', rawurlencode(__('That email address is already booked onto this event.', 'appy-events')), $return));
+            exit;
+        }
+
+        Appy_Events_Attendees::add($event_id, $name, $email, 'manual');
+        wp_safe_redirect(add_query_arg('attendee_added', '1', $return));
+        exit;
+    }
+
     private function total_attendees($events) {
         $total = 0;
         foreach ($events as $event) $total += Appy_Events_Attendees::count($event->ID);
@@ -231,6 +347,7 @@ class Appy_Events_Frontend {
             </div>
             <div class="appy-event-actions">
                 <?php if ('publish' === $event->post_status) : ?><a href="<?php echo esc_url(get_permalink($event)); ?>"><?php esc_html_e('View', 'appy-events'); ?></a><?php endif; ?>
+                <a href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Attendees', 'appy-events'); ?></a>
                 <a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'edit', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Edit', 'appy-events'); ?></a>
             </div>
         </article>
