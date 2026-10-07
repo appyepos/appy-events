@@ -99,6 +99,7 @@ class Appy_Events_Frontend {
         $image = $event_id ? get_the_post_thumbnail_url($event_id, 'medium') : '';
         $woocommerce = Appy_Events_WooCommerce::available();
         $price = $event_id ? get_post_meta($event_id, '_appy_event_price', true) : '';
+        $tickets = $event_id ? Appy_Events_Tickets::get($event_id) : [['name'=>'General Admission','price'=>'','capacity'=>'','product_id'=>0]];
         $status = $event ? $event->post_status : 'publish';
 
         ob_start(); ?>
@@ -144,7 +145,7 @@ class Appy_Events_Frontend {
                         <label><input type="radio" name="event_type" value="free" <?php checked($type, 'free'); ?>><strong><?php esc_html_e('Free RSVP', 'appy-events'); ?></strong><span><?php esc_html_e('People reserve a place using the built-in booking form.', 'appy-events'); ?></span></label>
                         <label class="<?php echo $woocommerce ? '' : 'is-disabled'; ?>"><input type="radio" name="event_type" value="paid" <?php checked($type, 'paid'); ?> <?php disabled(!$woocommerce); ?>><strong><?php esc_html_e('Paid ticket', 'appy-events'); ?></strong><span><?php echo esc_html($woocommerce ? __('Sell tickets through WooCommerce.', 'appy-events') : __('Requires WooCommerce.', 'appy-events')); ?></span></label>
                     </div>
-                    <?php if ($woocommerce) : ?><p class="appy-field appy-paid-price"><label><?php esc_html_e('Ticket price (£)', 'appy-events'); ?></label><input type="number" min="0" step="0.01" name="event_price" value="<?php echo esc_attr($price); ?>"></p><?php endif; ?>
+                    <?php if ($woocommerce) : ?><div class="appy-ticket-editor"><div class="appy-ticket-editor-head"><strong><?php esc_html_e('Ticket types','appy-events'); ?></strong><button type="button" class="appy-events-button is-secondary" onclick="appyAddTicket()"><?php esc_html_e('Add ticket type','appy-events'); ?></button></div><div id="appy-ticket-rows"><?php foreach($tickets as $ticket): ?><div class="appy-ticket-edit-row"><input type="text" name="ticket_name[]" placeholder="Adult / Child / VIP" value="<?php echo esc_attr($ticket['name']??''); ?>" required><input type="number" name="ticket_price[]" min="0" step="0.01" placeholder="Price" value="<?php echo esc_attr($ticket['price']??''); ?>" required><input type="number" name="ticket_capacity[]" min="0" step="1" placeholder="Capacity (optional)" value="<?php echo esc_attr($ticket['capacity']??''); ?>"><button type="button" class="appy-link-danger" onclick="this.closest('.appy-ticket-edit-row').remove()"><?php esc_html_e('Remove','appy-events'); ?></button></div><?php endforeach; ?></div><small><?php esc_html_e('Add Adult, Child, VIP or any other ticket types. Leave ticket capacity blank to use the overall event capacity.','appy-events'); ?></small></div><script>function appyAddTicket(){var w=document.getElementById('appy-ticket-rows'),r=document.createElement('div');r.className='appy-ticket-edit-row';r.innerHTML='<input type="text" name="ticket_name[]" placeholder="Adult / Child / VIP" required><input type="number" name="ticket_price[]" min="0" step="0.01" placeholder="Price" required><input type="number" name="ticket_capacity[]" min="0" step="1" placeholder="Capacity (optional)"><button type="button" class="appy-link-danger" onclick="this.closest(\'.appy-ticket-edit-row\').remove()">Remove</button>';w.appendChild(r)}</script><?php endif; ?>
                 </section>
 
                 <div class="appy-event-form-actions">
@@ -188,7 +189,10 @@ class Appy_Events_Frontend {
         update_post_meta($saved_id, '_appy_event_type', $type);
         $price = isset($_POST['event_price']) ? max(0, (float) $_POST['event_price']) : 0;
         update_post_meta($saved_id, '_appy_event_price', $price);
-        if ('paid' === $type && $price > 0) Appy_Events_WooCommerce::sync_product($saved_id, $price);
+        if ('paid' === $type) {
+            $tickets=Appy_Events_Tickets::sanitize($_POST['ticket_name']??[],$_POST['ticket_price']??[],$_POST['ticket_capacity']??[]);
+            if($tickets) Appy_Events_Tickets::sync($saved_id,$tickets);
+        }
 
         if ($event_id && !empty($_POST['remove_event_image'])) delete_post_thumbnail($saved_id);
         if (!empty($_FILES['event_image']['name'])) {
@@ -200,8 +204,8 @@ class Appy_Events_Frontend {
         }
 
         $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
-        if ('paid' === $type && $price <= 0) {
-            wp_safe_redirect(add_query_arg('appy_error', rawurlencode(__('Paid events require a ticket price.','appy-events')), $this->dashboard_url(['appy_action'=>'edit','event_id'=>$saved_id]))); exit;
+        if ('paid' === $type && empty($tickets)) {
+            wp_safe_redirect(add_query_arg('appy_error', rawurlencode(__('Paid events require at least one ticket type.','appy-events')), $this->dashboard_url(['appy_action'=>'edit','event_id'=>$saved_id]))); exit;
         }
         wp_safe_redirect(add_query_arg('appy_saved', '1', $return));
         exit;
