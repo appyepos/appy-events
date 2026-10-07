@@ -19,11 +19,6 @@ class Appy_Events_RSVP {
 
     private function is_builder_request() {
         if (isset($_GET['elementor-preview']) || (isset($_REQUEST['action']) && 0 === strpos(sanitize_key(wp_unslash($_REQUEST['action'])), 'elementor'))) return true;
-        if (class_exists('\\Elementor\\Plugin')) {
-            $plugin = \\Elementor\\Plugin::$instance;
-            if (isset($plugin->editor) && method_exists($plugin->editor, 'is_edit_mode') && $plugin->editor->is_edit_mode()) return true;
-            if (isset($plugin->preview) && method_exists($plugin->preview, 'is_preview_mode') && $plugin->preview->is_preview_mode()) return true;
-        }
         return false;
     }
 
