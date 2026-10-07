@@ -20,7 +20,7 @@ class Appy_Events_Post_Type {
             'map_meta_cap' => true,
             'menu_icon' => 'dashicons-calendar-alt',
             'supports' => ['title','editor','thumbnail','excerpt','elementor'],
-            'has_archive' => true,
+            'has_archive' => false,
             'rewrite' => ['slug' => 'events'],
         ]);
     }
