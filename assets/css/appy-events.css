@@ -277,3 +277,26 @@
 .appy-single-main>.appy-single-booking{position:static;margin-top:26px}
 .appy-single-main>.appy-single-booking .appy-paid-ticket,.appy-single-main>.appy-single-booking .appy-rsvp-box{max-width:none}
 @media(max-width:900px){.appy-single-details{position:static;grid-row:1}.appy-single-main{grid-row:2}.appy-single-event{display:flex;flex-direction:column}.appy-single-main{display:contents}.appy-event-hero{order:1}.appy-single-details{order:2}.appy-event-description{order:3}.appy-single-booking{order:4}}
+
+/* Rebuilt public ticket form */
+.appy-single-details .appy-event-facts{gap:0;padding:0;overflow:hidden}
+.appy-single-details .appy-event-facts>div{border:0;border-radius:0;padding:20px 22px}
+.appy-single-details .appy-event-facts>div+div{border-top:1px solid #e3e5e8}
+.appy-single-details .appy-event-facts strong{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#667085}
+.appy-single-details .appy-event-facts span{margin-top:6px;font-size:16px;color:#161b22}
+.appy-paid-ticket{box-shadow:none}
+.appy-ticket-intro{margin:0 0 18px;color:#667085}
+.appy-ticket-card{margin-top:14px;padding:18px;border:1px solid #e3e5e8;border-radius:10px;background:#fff}
+.appy-ticket-card-head{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.appy-ticket-card-head>div>strong,.appy-ticket-card-head>div>span{display:block}
+.appy-ticket-card-head>div>strong{font-size:17px}.appy-ticket-card-head>div>span{margin-top:3px;color:#667085}
+.appy-ticket-quantity{font-size:12px;font-weight:700;color:#667085}
+.appy-ticket-quantity select{display:block;min-width:82px;height:42px;margin-top:5px;padding:6px 30px 6px 10px;border:1px solid #cfd4dc;border-radius:7px;background:#fff;font:inherit;color:#161b22}
+.appy-attendee-fields{margin-top:18px}
+.appy-attendee-person{margin-top:12px;padding:16px;border-radius:9px;background:#f7f8fa}
+.appy-attendee-number{margin-bottom:11px;font-weight:750}
+.appy-attendee-person-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.appy-attendee-person-grid label{font-size:12px;font-weight:700;color:#475467}
+.appy-attendee-person-grid input{box-sizing:border-box;width:100%;min-height:43px;margin-top:5px;padding:8px 10px;border:1px solid #cfd4dc;border-radius:7px;background:#fff;font:inherit}
+.appy-ticket-submit{width:100%;margin-top:16px}
+@media(max-width:700px){.appy-ticket-card-head{align-items:flex-start}.appy-attendee-person-grid{grid-template-columns:1fr}}
