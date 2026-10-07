@@ -11,7 +11,9 @@ class Appy_Events_RSVP {
     }
 
     public function assets() {
-        if (!is_singular('appy_event')) return;
+        if (!is_singular()) return;
+        global $post;
+        if (!is_singular('appy_event') && (!$post || !has_shortcode($post->post_content,'appy_event_rsvp'))) return;
         wp_enqueue_style('appy-events', APPY_EVENTS_URL . 'assets/css/appy-events.css', [], APPY_EVENTS_VERSION);
     }
 
@@ -39,8 +41,11 @@ class Appy_Events_RSVP {
         if (isset($_GET['appy_rsvp']) && 'closed' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) return '<div class="appy-rsvp-notice"><strong>'.esc_html__('Bookings for this event are closed.','appy-events').'</strong></div>';
 
         if (isset($_GET['appy_rsvp']) && 'success' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) {
-            return '<div class="appy-rsvp-success"><strong>' . esc_html__('Your place is booked.', 'appy-events') . '</strong><span>' . esc_html__('We have sent a confirmation to your email address.', 'appy-events') . '</span></div>';
+            $extra = Appy_Events_Settings::get('confirmation_email',1) ? '<span>'.esc_html__('We have sent a confirmation to your email address.','appy-events').'</span>' : '';
+            return '<div class="appy-rsvp-success"><strong>' . esc_html__('Your place is booked.', 'appy-events') . '</strong>'.$extra.'</div>'; 
         }
+
+        if (isset($_GET['appy_rsvp']) && 'invalid' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) return '<div class="appy-rsvp-notice is-error"><strong>'.esc_html__('Please enter a valid name and email address.','appy-events').'</strong></div>';
 
         if (isset($_GET['appy_rsvp']) && 'duplicate' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) {
             return '<div class="appy-rsvp-notice is-error"><strong>' . esc_html__('This email address is already booked onto this event.', 'appy-events') . '</strong></div>';
@@ -94,7 +99,7 @@ class Appy_Events_RSVP {
 
         $name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';
         $email = isset($_POST['email']) ? sanitize_email(wp_unslash($_POST['email'])) : '';
-        if (!$name || !is_email($email)) wp_die(esc_html__('Please enter a valid name and email.', 'appy-events'));
+        if (!$name || !is_email($email)) { wp_safe_redirect(add_query_arg('appy_rsvp','invalid',get_permalink($event_id))); exit; }
 
         $redirect = get_permalink($event_id);
 
