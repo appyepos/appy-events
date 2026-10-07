@@ -300,3 +300,8 @@
 .appy-attendee-person-grid input{box-sizing:border-box;width:100%;min-height:43px;margin-top:5px;padding:8px 10px;border:1px solid #cfd4dc;border-radius:7px;background:#fff;font:inherit}
 .appy-ticket-submit{width:100%;margin-top:16px}
 @media(max-width:700px){.appy-ticket-card-head{align-items:flex-start}.appy-attendee-person-grid{grid-template-columns:1fr}}
+
+.appy-single-main>.appy-single-booking,.appy-single-main>.appy-single-booking .appy-paid-ticket{width:100%;max-width:none;box-sizing:border-box}
+.appy-paid-ticket{padding:28px}.appy-ticket-card{width:100%;box-sizing:border-box}
+.appy-add-attendee{display:inline-flex;margin-top:12px;padding:8px 0;border:0;background:transparent;color:#161b22;font:inherit;font-weight:750;cursor:pointer}
+.appy-add-attendee:disabled{opacity:.4;cursor:not-allowed}.appy-remove-attendee{float:right;margin:0 0 8px 12px;padding:0;border:0;background:transparent;color:#b42318;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
