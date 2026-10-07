@@ -227,3 +227,13 @@
 .appy-rsvp-success span,.appy-rsvp-notice span { margin-top:4px; }
 .appy-rsvp-notice.is-error,.appy-rsvp-notice.is-full { border-color:#e6b8b8; background:#fff3f3; color:#8a2424; }
 @media(max-width:700px){ .appy-rsvp-fields{grid-template-columns:1fr}.appy-rsvp-heading{display:block}.appy-rsvp-places{display:inline-block;margin-top:14px} }
+
+
+/* Message attendees */
+.appy-message-attendees { margin:0 0 28px; }
+.appy-message-intro { margin:-8px 0 18px; color:var(--appy-muted); }
+.appy-message-fields { display:grid; gap:15px; }
+.appy-message-fields textarea { box-sizing:border-box; width:100%; min-height:140px; padding:10px 12px; border:1px solid #cfd4dc; border-radius:7px; background:#fff; color:var(--appy-text); font:inherit; resize:vertical; }
+.appy-message-actions { display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-top:16px; }
+.appy-message-actions span { color:var(--appy-muted); font-size:13px; }
+@media(max-width:700px){ .appy-message-actions{justify-content:space-between}.appy-message-actions .appy-events-button{margin:0} }
