@@ -22,6 +22,12 @@ class Appy_Events_Public {
   <div class="appy-event-facts"><div><strong><?php esc_html_e('When','appy-events'); ?></strong><span><?php echo esc_html($this->fmt($start)); ?><?php if($end) echo ' – '.esc_html($this->fmt($end)); ?></span></div>
   <?php if($loc): ?><div><strong><?php esc_html_e('Where','appy-events'); ?></strong><span><?php echo esc_html($loc); ?></span></div><?php endif; ?>
   <div><strong><?php esc_html_e('Availability','appy-events'); ?></strong><span><?php echo esc_html($cap?sprintf(__('%d places left','appy-events'),max(0,$cap-$n)):__('Unlimited places','appy-events')); ?></span></div></div></div><?php
-  return ob_get_clean().$content;
+  $before=ob_get_clean();
+  if ('paid' === get_post_meta($id,'_appy_event_type',true) && Appy_Events_WooCommerce::available()) {
+   $pid=absint(get_post_meta($id,'_appy_event_product_id',true)); $price=get_post_meta($id,'_appy_event_price',true);
+   if($pid && (!$cap || $n<$cap)) $content .= '<div class="appy-paid-ticket"><span class="appy-events-kicker">'.esc_html__('Paid event','appy-events').'</span><h3>'.esc_html__('Book your ticket','appy-events').'</h3><strong>'.wp_kses_post(wc_price($price)).'</strong><a class="appy-events-button" href="'.esc_url(add_query_arg('add-to-cart',$pid,wc_get_cart_url())).'">'.esc_html__('Buy ticket','appy-events').'</a></div>';
+   elseif($cap && $n >= $cap) $content .= '<div class="appy-rsvp-notice is-full"><strong>'.esc_html__('This event is sold out.','appy-events').'</strong></div>';
+  }
+  return $before.$content;
  }
 }
