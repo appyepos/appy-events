@@ -397,7 +397,9 @@ class Appy_Events_Frontend {
         if(!$this->can_manage()) wp_die(esc_html__('Permission denied.','appy-events'));
         $id=absint($_POST['event_id']??0); $nonce=sanitize_text_field(wp_unslash($_POST['appy_delete_nonce']??'')); $return=esc_url_raw(wp_unslash($_POST['return_url']??home_url('/')));
         if(!$id||!wp_verify_nonce($nonce,'appy_delete_event_'.$id)||'appy_event'!==get_post_type($id)||!current_user_can('delete_post',$id)) wp_die(esc_html__('Invalid request.','appy-events'));
-        global $wpdb; $wpdb->delete(Appy_Events_Attendees::table(),['event_id'=>$id],['%d']); wp_delete_post($id,true);
+        global $wpdb; $wpdb->delete(Appy_Events_Attendees::table(),['event_id'=>$id],['%d']);
+        $pid=absint(get_post_meta($id,'_appy_event_product_id',true)); if($pid && 'product'===get_post_type($pid)) wp_delete_post($pid,true);
+        wp_delete_post($id,true);
         wp_safe_redirect(add_query_arg('event_deleted','1',$return)); exit;
     }
 
