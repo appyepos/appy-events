@@ -8,6 +8,8 @@ class Appy_Events_Frontend {
         add_action('admin_post_appy_event_frontend_save', [$this, 'save_event']);
         add_action('admin_post_appy_event_attendee_add', [$this, 'add_attendee']);
         add_action('admin_post_appy_event_message_attendees', [$this, 'message_attendees']);
+        add_action('admin_post_appy_event_attendee_remove', [$this, 'remove_attendee']);
+        add_action('admin_post_appy_event_delete', [$this, 'delete_event']);
     }
 
     public function assets() {
@@ -22,7 +24,7 @@ class Appy_Events_Frontend {
     }
 
     private function dashboard_url($args = []) {
-        $url = remove_query_arg(['appy_action', 'event_id', 'appy_saved', 'attendee_added', 'attendee_error', 'message_sent', 'message_error']);
+        $url = remove_query_arg(['appy_action','event_id','appy_saved','attendee_added','attendee_removed','attendee_error','message_sent','message_error','event_deleted']);
         return add_query_arg($args, $url);
     }
 
@@ -55,6 +57,7 @@ class Appy_Events_Frontend {
 
         ob_start(); ?>
         <div class="appy-events-dashboard">
+            <?php if (isset($_GET['event_deleted'])) : ?><div class="appy-events-success"><?php esc_html_e('Event deleted.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['appy_saved'])) : ?>
                 <div class="appy-events-success"><?php esc_html_e('Event saved successfully.', 'appy-events'); ?></div>
             <?php endif; ?>
@@ -96,7 +99,9 @@ class Appy_Events_Frontend {
         $capacity = $event_id ? get_post_meta($event_id, '_appy_event_capacity', true) : '';
         $type = $event_id ? (get_post_meta($event_id, '_appy_event_type', true) ?: 'free') : 'free';
         $image = $event_id ? get_the_post_thumbnail_url($event_id, 'medium') : '';
-        $woocommerce = class_exists('WooCommerce');
+        $woocommerce = Appy_Events_WooCommerce::available();
+        $price = $event_id ? get_post_meta($event_id, '_appy_event_price', true) : '';
+        $status = $event ? $event->post_status : 'publish';
 
         ob_start(); ?>
         <div class="appy-events-dashboard appy-event-editor">
@@ -124,6 +129,7 @@ class Appy_Events_Frontend {
                         <p class="appy-field"><label><?php esc_html_e('End date & time', 'appy-events'); ?></label><input type="datetime-local" name="event_end" value="<?php echo esc_attr($end); ?>"></p>
                         <p class="appy-field"><label><?php esc_html_e('Location', 'appy-events'); ?></label><input type="text" name="event_location" value="<?php echo esc_attr($location); ?>" placeholder="<?php esc_attr_e('e.g. Bournemouth Pier', 'appy-events'); ?>"></p>
                         <p class="appy-field"><label><?php esc_html_e('Capacity', 'appy-events'); ?></label><input type="number" min="0" step="1" name="event_capacity" value="<?php echo esc_attr($capacity); ?>" placeholder="<?php esc_attr_e('Unlimited', 'appy-events'); ?>"><small><?php esc_html_e('Leave blank or 0 for unlimited.', 'appy-events'); ?></small></p>
+                        <p class="appy-field"><label><?php esc_html_e('Status', 'appy-events'); ?></label><select name="event_status"><option value="publish" <?php selected($status,'publish'); ?>><?php esc_html_e('Published','appy-events'); ?></option><option value="draft" <?php selected($status,'draft'); ?>><?php esc_html_e('Draft','appy-events'); ?></option></select></p>
                     </div>
                 </section>
 
@@ -139,6 +145,7 @@ class Appy_Events_Frontend {
                         <label><input type="radio" name="event_type" value="free" <?php checked($type, 'free'); ?>><strong><?php esc_html_e('Free RSVP', 'appy-events'); ?></strong><span><?php esc_html_e('People reserve a place using the built-in booking form.', 'appy-events'); ?></span></label>
                         <label class="<?php echo $woocommerce ? '' : 'is-disabled'; ?>"><input type="radio" name="event_type" value="paid" <?php checked($type, 'paid'); ?> <?php disabled(!$woocommerce); ?>><strong><?php esc_html_e('Paid ticket', 'appy-events'); ?></strong><span><?php echo esc_html($woocommerce ? __('Sell tickets through WooCommerce.', 'appy-events') : __('Requires WooCommerce.', 'appy-events')); ?></span></label>
                     </div>
+                    <?php if ($woocommerce) : ?><p class="appy-field appy-paid-price"><label><?php esc_html_e('Ticket price (£)', 'appy-events'); ?></label><input type="number" min="0" step="0.01" name="event_price" value="<?php echo esc_attr($price); ?>"></p><?php endif; ?>
                 </section>
 
                 <div class="appy-event-form-actions">
@@ -164,7 +171,7 @@ class Appy_Events_Frontend {
 
         $post_data = [
             'post_type' => 'appy_event',
-            'post_status' => 'publish',
+            'post_status' => isset($_POST['event_status']) && 'draft' === $_POST['event_status'] ? 'draft' : 'publish',
             'post_title' => $title,
             'post_content' => isset($_POST['event_description']) ? wp_kses_post(wp_unslash($_POST['event_description'])) : '',
         ];
@@ -180,6 +187,9 @@ class Appy_Events_Frontend {
         update_post_meta($saved_id, '_appy_event_capacity', $capacity ?: '');
         $type = isset($_POST['event_type']) && 'paid' === $_POST['event_type'] && class_exists('WooCommerce') ? 'paid' : 'free';
         update_post_meta($saved_id, '_appy_event_type', $type);
+        $price = isset($_POST['event_price']) ? max(0, (float) $_POST['event_price']) : 0;
+        update_post_meta($saved_id, '_appy_event_price', $price);
+        if ('paid' === $type && $price > 0) Appy_Events_WooCommerce::sync_product($saved_id, $price);
 
         if (!empty($_FILES['event_image']['name'])) {
             require_once ABSPATH . 'wp-admin/includes/file.php';
@@ -211,6 +221,7 @@ class Appy_Events_Frontend {
 
         ob_start(); ?>
         <div class="appy-events-dashboard appy-attendees-view">
+            <?php if (isset($_GET['attendee_removed'])) : ?><div class="appy-events-success"><?php esc_html_e('Attendee removed.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['attendee_added'])) : ?><div class="appy-events-success"><?php esc_html_e('Attendee added successfully.', 'appy-events'); ?></div><?php endif; ?>
             <?php if (isset($_GET['attendee_error'])) : ?><div class="appy-events-notice is-error"><strong><?php echo esc_html(sanitize_text_field(wp_unslash($_GET['attendee_error']))); ?></strong></div><?php endif; ?>
             <?php if (isset($_GET['message_sent'])) : ?><div class="appy-events-success"><?php printf(esc_html__('Message sent to %d attendee(s).', 'appy-events'), absint($_GET['message_sent'])); ?></div><?php endif; ?>
@@ -275,7 +286,7 @@ class Appy_Events_Frontend {
                 <?php else : ?>
                     <div class="appy-attendee-table-wrap">
                         <table class="appy-attendee-table">
-                            <thead><tr><th><?php esc_html_e('Name', 'appy-events'); ?></th><th><?php esc_html_e('Email', 'appy-events'); ?></th><th><?php esc_html_e('Booking', 'appy-events'); ?></th><th><?php esc_html_e('Booked', 'appy-events'); ?></th></tr></thead>
+                            <thead><tr><th><?php esc_html_e('Name', 'appy-events'); ?></th><th><?php esc_html_e('Email', 'appy-events'); ?></th><th><?php esc_html_e('Booking', 'appy-events'); ?></th><th><?php esc_html_e('Booked', 'appy-events'); ?></th><th></th></tr></thead>
                             <tbody>
                             <?php foreach ($attendees as $attendee) : ?>
                                 <tr>
@@ -283,6 +294,7 @@ class Appy_Events_Frontend {
                                     <td><a href="mailto:<?php echo esc_attr($attendee->email); ?>"><?php echo esc_html($attendee->email); ?></a></td>
                                     <td><span class="appy-event-type"><?php echo esc_html('manual' === $attendee->source ? __('Manual', 'appy-events') : ('paid' === $attendee->source ? __('Paid ticket', 'appy-events') : __('RSVP', 'appy-events'))); ?></span></td>
                                     <td><?php echo esc_html(wp_date(get_option('date_format') . ' ' . get_option('time_format'), strtotime($attendee->created_at))); ?></td>
+                                    <td><form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Remove this attendee?','appy-events')); ?>')"><input type="hidden" name="action" value="appy_event_attendee_remove"><input type="hidden" name="event_id" value="<?php echo esc_attr($event_id); ?>"><input type="hidden" name="attendee_id" value="<?php echo esc_attr($attendee->id); ?>"><input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url(['appy_action'=>'attendees','event_id'=>$event_id])); ?>"><?php wp_nonce_field('appy_remove_attendee_'.$event_id,'appy_remove_nonce'); ?><button class="appy-link-danger" type="submit"><?php esc_html_e('Remove','appy-events'); ?></button></form></td>
                                 </tr>
                             <?php endforeach; ?>
                             </tbody>
@@ -370,6 +382,22 @@ class Appy_Events_Frontend {
         exit;
     }
 
+
+    public function remove_attendee() {
+        if (!$this->can_manage()) wp_die(esc_html__('Permission denied.','appy-events'));
+        $event_id=absint($_POST['event_id']??0); $id=absint($_POST['attendee_id']??0); $nonce=sanitize_text_field(wp_unslash($_POST['appy_remove_nonce']??'')); $return=esc_url_raw(wp_unslash($_POST['return_url']??home_url('/')));
+        if(!$event_id||!$id||!wp_verify_nonce($nonce,'appy_remove_attendee_'.$event_id)||!current_user_can('edit_post',$event_id)) wp_die(esc_html__('Invalid request.','appy-events'));
+        global $wpdb; $wpdb->delete(Appy_Events_Attendees::table(),['id'=>$id,'event_id'=>$event_id],['%d','%d']);
+        wp_safe_redirect(add_query_arg('attendee_removed','1',$return)); exit;
+    }
+    public function delete_event() {
+        if(!$this->can_manage()) wp_die(esc_html__('Permission denied.','appy-events'));
+        $id=absint($_POST['event_id']??0); $nonce=sanitize_text_field(wp_unslash($_POST['appy_delete_nonce']??'')); $return=esc_url_raw(wp_unslash($_POST['return_url']??home_url('/')));
+        if(!$id||!wp_verify_nonce($nonce,'appy_delete_event_'.$id)||'appy_event'!==get_post_type($id)||!current_user_can('delete_post',$id)) wp_die(esc_html__('Invalid request.','appy-events'));
+        global $wpdb; $wpdb->delete(Appy_Events_Attendees::table(),['event_id'=>$id],['%d']); wp_delete_post($id,true);
+        wp_safe_redirect(add_query_arg('event_deleted','1',$return)); exit;
+    }
+
     private function total_attendees($events) {
         $total = 0;
         foreach ($events as $event) $total += Appy_Events_Attendees::count($event->ID);
@@ -412,6 +440,7 @@ class Appy_Events_Frontend {
                 <?php if ('publish' === $event->post_status) : ?><a href="<?php echo esc_url(get_permalink($event)); ?>"><?php esc_html_e('View', 'appy-events'); ?></a><?php endif; ?>
                 <a href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'attendees', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Attendees', 'appy-events'); ?></a>
                 <a class="appy-events-button is-secondary" href="<?php echo esc_url($this->dashboard_url(['appy_action' => 'edit', 'event_id' => $event->ID])); ?>"><?php esc_html_e('Edit', 'appy-events'); ?></a>
+                <form class="appy-inline-form" method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>" onsubmit="return confirm('<?php echo esc_js(__('Delete this event? This cannot be undone.','appy-events')); ?>')"><input type="hidden" name="action" value="appy_event_delete"><input type="hidden" name="event_id" value="<?php echo esc_attr($event->ID); ?>"><input type="hidden" name="return_url" value="<?php echo esc_url($this->dashboard_url()); ?>"><?php wp_nonce_field('appy_delete_event_'.$event->ID,'appy_delete_nonce'); ?><button class="appy-link-danger" type="submit"><?php esc_html_e('Delete','appy-events'); ?></button></form>
             </div>
         </article>
         <?php
