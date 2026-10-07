@@ -53,7 +53,7 @@ class Appy_Events_Public {
    </div>
    <aside class="appy-single-details">
     <div class="appy-event-facts">
-     <div><strong><?php esc_html_e('Date','appy-events'); ?></strong><span><?php echo esc_html($start ? wp_date('l d/m/y',strtotime($start)) : ''); ?></span></div>
+     <div><strong><?php esc_html_e('Date','appy-events'); ?></strong><span><?php if($start){ echo esc_html(wp_date('l d/m/y',strtotime($start))); if($end && wp_date('Y-m-d',strtotime($end))!==wp_date('Y-m-d',strtotime($start))) echo ' '.esc_html__('to','appy-events').' '.esc_html(wp_date('l d/m/y',strtotime($end))); } ?></span></div>
      <div><strong><?php esc_html_e('Time','appy-events'); ?></strong><span><?php echo esc_html($start ? wp_date('g.i a',strtotime($start)) : ''); ?><?php if($end) echo ' '.esc_html__('to','appy-events').' '.esc_html(wp_date('g.i a',strtotime($end))); ?></span></div>
      <?php if($loc): ?><div><strong><?php esc_html_e('Where','appy-events'); ?></strong><span><?php echo esc_html($loc); ?></span></div><?php endif; ?>
      <div><strong><?php esc_html_e('Availability','appy-events'); ?></strong><span><?php echo esc_html($cap?sprintf(__('%d places left','appy-events'),max(0,$cap-$n)):__('Unlimited places','appy-events')); ?></span></div>
