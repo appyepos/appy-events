@@ -7,11 +7,20 @@ class Appy_Events_RSVP {
         add_action('admin_post_nopriv_appy_event_rsvp', [$this, 'submit']);
         add_action('admin_post_appy_event_rsvp', [$this, 'submit']);
         add_action('wp_enqueue_scripts', [$this, 'assets']);
+        add_filter('the_content', [$this, 'append_to_event_content']);
     }
 
     public function assets() {
         if (!is_singular('appy_event')) return;
         wp_enqueue_style('appy-events', APPY_EVENTS_URL . 'assets/css/appy-events.css', [], APPY_EVENTS_VERSION);
+    }
+
+    public function append_to_event_content($content) {
+        if (!is_singular('appy_event') || !in_the_loop() || !is_main_query()) return $content;
+        if (has_shortcode($content, 'appy_event_rsvp')) return $content;
+        if ('paid' === get_post_meta(get_the_ID(), '_appy_event_type', true)) return $content;
+
+        return $content . $this->shortcode(['id' => get_the_ID()]);
     }
 
     public function shortcode($atts) {
