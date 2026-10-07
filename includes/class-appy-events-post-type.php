@@ -14,10 +14,12 @@ class Appy_Events_Post_Type {
             ],
             'public' => true,
             'show_in_rest' => true,
+            'show_in_nav_menus' => true,
+            'show_in_admin_bar' => true,
             'capability_type' => ['appy_event','appy_events'],
             'map_meta_cap' => true,
             'menu_icon' => 'dashicons-calendar-alt',
-            'supports' => ['title','editor','thumbnail','excerpt'],
+            'supports' => ['title','editor','thumbnail','excerpt','elementor'],
             'has_archive' => true,
             'rewrite' => ['slug' => 'events'],
         ]);
