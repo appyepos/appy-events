@@ -28,10 +28,15 @@ class Appy_Events_RSVP {
         $event_id = absint($atts['id']);
         if (!$event_id || 'appy_event' !== get_post_type($event_id)) return '';
         if ('paid' === get_post_meta($event_id, '_appy_event_type', true)) return '';
+        if (Appy_Events_Operations::cancelled($event_id)) return '<div class="appy-rsvp-notice is-full"><strong>'.esc_html__('This event has been cancelled.','appy-events').'</strong></div>';
+        if (Appy_Events_Operations::is_past($event_id)) return '<div class="appy-rsvp-notice"><strong>'.esc_html__('Bookings for this event are closed.','appy-events').'</strong></div>';
 
         $capacity = absint(get_post_meta($event_id, '_appy_event_capacity', true));
         $count = Appy_Events_Attendees::count($event_id);
         $remaining = $capacity ? max(0, $capacity - $count) : null;
+
+        if (isset($_GET['appy_rsvp']) && 'cancelled' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) return '<div class="appy-rsvp-success"><strong>'.esc_html__('Your booking has been cancelled.','appy-events').'</strong></div>';
+        if (isset($_GET['appy_rsvp']) && 'closed' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) return '<div class="appy-rsvp-notice"><strong>'.esc_html__('Bookings for this event are closed.','appy-events').'</strong></div>';
 
         if (isset($_GET['appy_rsvp']) && 'success' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) {
             return '<div class="appy-rsvp-success"><strong>' . esc_html__('Your place is booked.', 'appy-events') . '</strong><span>' . esc_html__('We have sent a confirmation to your email address.', 'appy-events') . '</span></div>';
@@ -82,6 +87,7 @@ class Appy_Events_RSVP {
         if (!$event_id || !wp_verify_nonce($nonce, 'appy_event_rsvp_' . $event_id) || 'appy_event' !== get_post_type($event_id)) {
             wp_die(esc_html__('Invalid RSVP request.', 'appy-events'));
         }
+        if (Appy_Events_Operations::cancelled($event_id) || Appy_Events_Operations::is_past($event_id)) { wp_safe_redirect(add_query_arg('appy_rsvp','closed',get_permalink($event_id))); exit; }
         if ('paid' === get_post_meta($event_id, '_appy_event_type', true)) {
             wp_die(esc_html__('This event does not accept free RSVP bookings.', 'appy-events'));
         }
@@ -131,7 +137,9 @@ class Appy_Events_RSVP {
             $message .= "\n" . sprintf(__('Location: %s', 'appy-events'), $location);
         }
 
+        $cancel=add_query_arg(['action'=>'appy_event_cancel_booking','event_id'=>$event_id,'email'=>$email,'token'=>Appy_Events_Operations::token($event_id,$email)],admin_url('admin-post.php'));
         $message .= "\n\n" . __('We look forward to seeing you there.', 'appy-events');
+        $message .= "\n\n" . sprintf(__('If you can no longer attend, cancel your booking here: %s','appy-events'),$cancel);
         $message .= "\n\n" . wp_specialchars_decode(get_bloginfo('name'), ENT_QUOTES);
 
         wp_mail($email, $subject, $message);
