@@ -271,3 +271,9 @@
 .appy-ticket-editor{margin-top:18px}.appy-ticket-editor-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:10px}.appy-ticket-edit-row{display:grid;grid-template-columns:1.4fr .7fr .9fr auto;gap:10px;align-items:center;margin-bottom:10px}.appy-ticket-edit-row input{box-sizing:border-box;width:100%;min-height:44px;padding:9px 11px;border:1px solid #cfd4dc;border-radius:7px}.appy-ticket-editor>small{display:block;color:#667085}
 @media(max-width:900px){.appy-single-event{grid-template-columns:1fr;gap:24px}.appy-single-booking{position:static}.appy-event-hero{max-height:520px}.appy-event-hero img{max-height:520px!important}}
 @media(max-width:700px){.appy-single-main .appy-event-facts{grid-template-columns:1fr}.appy-event-hero{min-height:180px;max-height:430px}.appy-event-hero img{max-height:430px!important}.appy-ticket-edit-row{grid-template-columns:1fr 1fr}.appy-ticket-edit-row input:first-child{grid-column:1/-1}.appy-ticket-row{align-items:flex-start;flex-direction:column}.appy-ticket-buy{width:100%}.appy-ticket-buy .appy-events-button{flex:1}}
+
+.appy-single-details{position:sticky;top:110px;align-self:start}
+.appy-single-details .appy-event-facts{display:grid;grid-template-columns:1fr;margin:0;padding:22px;background:#fff;border:1px solid #e3e5e8;border-radius:12px}
+.appy-single-main>.appy-single-booking{position:static;margin-top:26px}
+.appy-single-main>.appy-single-booking .appy-paid-ticket,.appy-single-main>.appy-single-booking .appy-rsvp-box{max-width:none}
+@media(max-width:900px){.appy-single-details{position:static;grid-row:1}.appy-single-main{grid-row:2}.appy-single-event{display:flex;flex-direction:column}.appy-single-main{display:contents}.appy-event-hero{order:1}.appy-single-details{order:2}.appy-event-description{order:3}.appy-single-booking{order:4}}
