@@ -237,3 +237,17 @@
 .appy-message-actions { display:flex; justify-content:flex-end; align-items:center; gap:16px; margin-top:16px; }
 .appy-message-actions span { color:var(--appy-muted); font-size:13px; }
 @media(max-width:700px){ .appy-message-actions{justify-content:space-between}.appy-message-actions .appy-events-button{margin:0} }
+
+/* Public event cards and V1 controls */
+.appy-public-events{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.appy-public-card{overflow:hidden;border:1px solid #e3e5e8;border-radius:12px;background:#fff}
+.appy-public-card-image{display:block;aspect-ratio:16/10;overflow:hidden}.appy-public-card-image img{width:100%;height:100%;object-fit:cover;display:block}
+.appy-public-card-body{padding:18px}.appy-public-card-body h3{margin:5px 0 8px}.appy-public-card-body h3 a{text-decoration:none}.appy-public-card-body p{margin:0 0 16px;color:#667085}
+.appy-public-card-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:#667085}
+.appy-event-public{margin-bottom:24px}.appy-event-hero{margin-bottom:18px;overflow:hidden;border-radius:12px}.appy-event-hero img{width:100%;height:auto;display:block}
+.appy-event-facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 24px}.appy-event-facts>div{padding:16px;border:1px solid #e3e5e8;border-radius:9px}.appy-event-facts strong,.appy-event-facts span{display:block}.appy-event-facts span{margin-top:4px;color:#667085}
+.appy-paid-ticket{max-width:720px;margin-top:24px;padding:24px;border:1px solid #e3e5e8;border-radius:10px}.appy-paid-ticket h3{margin:3px 0 10px}.appy-paid-ticket>strong{display:block;margin-bottom:15px;font-size:24px}
+.appy-link-danger{padding:0;border:0;background:none;color:#b42318;cursor:pointer;font:inherit;font-weight:650}.appy-inline-form{display:inline;margin:0}
+.appy-field select{box-sizing:border-box;width:100%;min-height:46px;padding:10px 12px;border:1px solid #cfd4dc;border-radius:7px;background:#fff;font:inherit}.appy-paid-price{margin-top:16px;max-width:260px}
+@media(max-width:900px){.appy-public-events{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.appy-public-events,.appy-event-facts{grid-template-columns:1fr}.appy-public-card-foot{align-items:flex-start}.appy-event-actions{flex-wrap:wrap}}
