@@ -38,9 +38,9 @@ class Appy_Events_Public {
     <?php elseif('paid'===$type && Appy_Events_WooCommerce::available()): $types=Appy_Events_Tickets::get($id); ?>
       <div class="appy-paid-ticket"><span class="appy-events-kicker"><?php esc_html_e('Tickets','appy-events'); ?></span><h3><?php esc_html_e('Book your tickets','appy-events'); ?></h3>
       <?php foreach($types as $i=>$ticket): $pid=absint($ticket['product_id']??0); if(!$pid) continue; $tcap=absint($ticket['capacity']??0); $booked=$tcap?Appy_Events_Tickets::booked($id,$i):0; $left=$tcap?max(0,$tcap-$booked):99; ?>
-       <form class="appy-ticket-row" method="get" action="<?php echo esc_url(wc_get_cart_url()); ?>"><input type="hidden" name="add-to-cart" value="<?php echo esc_attr($pid); ?>">
+       <form class="appy-ticket-row appy-attendee-ticket-form" method="post" action="<?php echo esc_url(wc_get_cart_url()); ?>"><input type="hidden" name="add-to-cart" value="<?php echo esc_attr($pid); ?>">
         <div><strong><?php echo esc_html($ticket['name']); ?></strong><span><?php echo wp_kses_post(wc_price($ticket['price'])); ?><?php if($tcap): ?> · <?php echo esc_html(sprintf(__('%d left','appy-events'),$left)); ?><?php endif; ?></span></div>
-        <?php if($left>0): ?><div class="appy-ticket-buy"><label><?php esc_html_e('Qty','appy-events'); ?><input type="number" name="quantity" min="1" max="<?php echo esc_attr(min(10,$left)); ?>" value="1"></label><button class="appy-events-button" type="submit"><?php esc_html_e('Add','appy-events'); ?></button></div><?php else: ?><span class="appy-sold-out"><?php esc_html_e('Sold out','appy-events'); ?></span><?php endif; ?>
+        <?php if($left>0): ?><div class="appy-ticket-buy"><label><?php esc_html_e('Qty','appy-events'); ?><input type="number" name="quantity" min="1" max="<?php echo esc_attr(min(10,$left)); ?>" value="1"></label><button class="appy-events-button" type="submit"><?php esc_html_e('Continue','appy-events'); ?></button></div><?php else: ?><span class="appy-sold-out"><?php esc_html_e('Sold out','appy-events'); ?></span><?php endif; ?>
        </form>
       <?php endforeach; ?></div>
     <?php else: echo do_shortcode('[appy_event_rsvp id="'.$id.'"]'); endif; ?>
