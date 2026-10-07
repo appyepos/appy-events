@@ -185,3 +185,23 @@
         justify-content: space-between;
     }
 }
+
+
+/* Front-end attendee management */
+.appy-attendee-summary { margin-bottom: 18px; }
+.appy-add-attendee { margin-bottom: 28px; }
+.appy-add-attendee-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto; gap:14px; align-items:end; }
+.appy-add-attendee-grid .appy-events-button { min-height:46px; }
+.appy-field input[type="email"] { box-sizing:border-box; width:100%; min-height:46px; padding:10px 12px; border:1px solid #cfd4dc; border-radius:7px; background:#fff; color:var(--appy-text); font:inherit; }
+.appy-attendee-list-section { margin-top:8px; }
+.appy-attendee-table-wrap { overflow-x:auto; border:1px solid var(--appy-border); border-radius:10px; background:#fff; }
+.appy-attendee-table { width:100%; border-collapse:collapse; }
+.appy-attendee-table th,.appy-attendee-table td { padding:13px 15px; border-bottom:1px solid var(--appy-border); text-align:left; vertical-align:middle; }
+.appy-attendee-table th { background:var(--appy-soft); color:var(--appy-muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+.appy-attendee-table tbody tr:last-child td { border-bottom:0; }
+.appy-attendee-table td { font-size:14px; }
+@media(max-width:700px){
+ .appy-add-attendee-grid{grid-template-columns:1fr}
+ .appy-add-attendee-grid .appy-events-button{width:100%}
+ .appy-attendee-table{min-width:620px}
+}
