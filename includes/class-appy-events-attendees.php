@@ -19,6 +19,8 @@ class Appy_Events_Attendees {
             event_id bigint(20) unsigned NOT NULL,
             name varchar(190) NOT NULL,
             email varchar(190) NOT NULL,
+            phone varchar(60) NOT NULL DEFAULT '',
+            ticket_type varchar(190) NOT NULL DEFAULT '',
             source varchar(30) NOT NULL DEFAULT 'rsvp',
             order_id bigint(20) unsigned DEFAULT NULL,
             created_at datetime NOT NULL,
@@ -50,15 +52,17 @@ class Appy_Events_Attendees {
         ));
     }
 
-    public static function add($event_id, $name, $email, $source = 'manual', $order_id = null) {
+    public static function add($event_id, $name, $email, $source = 'manual', $order_id = null, $phone = '', $ticket_type = '') {
         global $wpdb;
         return $wpdb->insert(self::table(), [
             'event_id' => absint($event_id),
             'name' => sanitize_text_field($name),
             'email' => sanitize_email($email),
+            'phone' => sanitize_text_field($phone),
+            'ticket_type' => sanitize_text_field($ticket_type),
             'source' => sanitize_key($source),
             'order_id' => $order_id ? absint($order_id) : null,
             'created_at' => current_time('mysql'),
-        ], ['%d', '%s', '%s', '%s', '%d', '%s']);
+        ], ['%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s']);
     }
 }
