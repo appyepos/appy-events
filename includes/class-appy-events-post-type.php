@@ -14,6 +14,8 @@ class Appy_Events_Post_Type {
             ],
             'public' => true,
             'show_in_rest' => true,
+            'capability_type' => ['appy_event','appy_events'],
+            'map_meta_cap' => true,
             'menu_icon' => 'dashicons-calendar-alt',
             'supports' => ['title','editor','thumbnail','excerpt'],
             'has_archive' => true,
