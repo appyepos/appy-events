@@ -32,17 +32,15 @@ class Appy_Events_Public {
     <?php elseif('paid'===$type && Appy_Events_WooCommerce::available()): $types=Appy_Events_Tickets::get($id); ?>
       <div class="appy-paid-ticket">
        <span class="appy-events-kicker"><?php esc_html_e('Tickets','appy-events'); ?></span>
-       <h3><?php esc_html_e('Choose your tickets','appy-events'); ?></h3>
-       <p class="appy-ticket-intro"><?php esc_html_e('Choose a quantity, then enter the details for each person attending.','appy-events'); ?></p>
+       <h3><?php esc_html_e('Book your tickets','appy-events'); ?></h3>
+       <p class="appy-ticket-intro"><?php esc_html_e('Enter the details for each person attending. Add another attendee if you need more tickets.','appy-events'); ?></p>
        <?php foreach($types as $i=>$ticket): $pid=absint($ticket['product_id']??0); if(!$pid) continue; $tcap=absint($ticket['capacity']??0); $booked=$tcap?Appy_Events_Tickets::booked($id,$i):0; $left=$tcap?max(0,$tcap-$booked):99; $maxqty=min(10,$left); ?>
         <form class="appy-ticket-card appy-attendee-ticket-form" method="post" action="<?php echo esc_url(wc_get_cart_url()); ?>">
-         <input type="hidden" name="add-to-cart" value="<?php echo esc_attr($pid); ?>">
-         <div class="appy-ticket-card-head">
-          <div><strong><?php echo esc_html($ticket['name']); ?></strong><span><?php echo wp_kses_post(wc_price($ticket['price'])); ?><?php if($tcap): ?> · <?php echo esc_html(sprintf(__('%d left','appy-events'),$left)); ?><?php endif; ?></span></div>
-          <?php if($left>0): ?><label class="appy-ticket-quantity"><?php esc_html_e('Quantity','appy-events'); ?><select name="quantity"><?php for($q=1;$q<=$maxqty;$q++): ?><option value="<?php echo esc_attr($q); ?>"><?php echo esc_html($q); ?></option><?php endfor; ?></select></label><?php else: ?><span class="appy-sold-out"><?php esc_html_e('Sold out','appy-events'); ?></span><?php endif; ?>
-         </div>
+         <input type="hidden" name="add-to-cart" value="<?php echo esc_attr($pid); ?>"><input class="appy-ticket-quantity-value" type="hidden" name="quantity" value="1">
+         <div class="appy-ticket-card-head"><div><strong><?php echo esc_html($ticket['name']); ?></strong><span><?php echo wp_kses_post(wc_price($ticket['price'])); ?><?php if($tcap): ?> · <?php echo esc_html(sprintf(__('%d left','appy-events'),$left)); ?><?php endif; ?></span></div><?php if(!$left): ?><span class="appy-sold-out"><?php esc_html_e('Sold out','appy-events'); ?></span><?php endif; ?></div>
          <?php if($left>0): ?>
-          <div class="appy-attendee-fields"></div>
+          <div class="appy-attendee-fields"><div class="appy-attendee-person"><div class="appy-attendee-number"><?php esc_html_e('Attendee 1','appy-events'); ?></div><div class="appy-attendee-person-grid"><label><?php esc_html_e('First name','appy-events'); ?><input required autocomplete="given-name" name="appy_attendees[0][first_name]"></label><label><?php esc_html_e('Last name','appy-events'); ?><input required autocomplete="family-name" name="appy_attendees[0][last_name]"></label><label><?php esc_html_e('Email','appy-events'); ?><input required type="email" autocomplete="email" name="appy_attendees[0][email]"></label><label><?php esc_html_e('Phone','appy-events'); ?><input required type="tel" autocomplete="tel" name="appy_attendees[0][phone]"></label></div></div></div>
+          <?php if($maxqty>1): ?><button type="button" class="appy-add-attendee" data-max="<?php echo esc_attr($maxqty); ?>">+ <?php esc_html_e('Add another attendee','appy-events'); ?></button><?php endif; ?>
           <button class="appy-events-button appy-ticket-submit" type="submit"><?php esc_html_e('Add tickets to cart','appy-events'); ?></button>
          <?php endif; ?>
         </form>
@@ -62,18 +60,10 @@ class Appy_Events_Public {
   </div>
   <script>
 document.querySelectorAll('.appy-attendee-ticket-form').forEach(function(form){
- const qty=form.querySelector('[name="quantity"]'),wrap=form.querySelector('.appy-attendee-fields');
- if(!qty||!wrap)return;
- function draw(){
-  const existing=Array.from(wrap.querySelectorAll('.appy-attendee-person')).map(function(p){return Array.from(p.querySelectorAll('input')).map(function(i){return i.value;});});
-  const count=parseInt(qty.value,10)||1; wrap.innerHTML='';
-  for(let i=0;i<count;i++){
-   const values=existing[i]||['','','','']; const row=document.createElement('div'); row.className='appy-attendee-person';
-   row.innerHTML='<div class="appy-attendee-number">Attendee '+(i+1)+'</div><div class="appy-attendee-person-grid"><label>First name<input required autocomplete="given-name" name="appy_attendees['+i+'][first_name]"></label><label>Last name<input required autocomplete="family-name" name="appy_attendees['+i+'][last_name]"></label><label>Email<input required type="email" autocomplete="email" name="appy_attendees['+i+'][email]"></label><label>Phone<input required type="tel" autocomplete="tel" name="appy_attendees['+i+'][phone]"></label></div>';
-   Array.from(row.querySelectorAll('input')).forEach(function(input,j){input.value=values[j]||'';}); wrap.appendChild(row);
-  }
- }
- qty.addEventListener('change',draw); qty.addEventListener('input',draw); draw();
+ const wrap=form.querySelector('.appy-attendee-fields'),qty=form.querySelector('.appy-ticket-quantity-value'),add=form.querySelector('.appy-add-attendee'); if(!wrap||!qty)return;
+ function renumber(){Array.from(wrap.querySelectorAll('.appy-attendee-person')).forEach(function(row,i){row.querySelector('.appy-attendee-number').textContent='Attendee '+(i+1);Array.from(row.querySelectorAll('input')).forEach(function(input){input.name=input.name.replace(/appy_attendees\[\d+\]/,'appy_attendees['+i+']');});});qty.value=wrap.querySelectorAll('.appy-attendee-person').length;if(add)add.disabled=parseInt(qty.value,10)>=parseInt(add.dataset.max,10);}
+ if(add)add.addEventListener('click',function(){const rows=wrap.querySelectorAll('.appy-attendee-person');if(rows.length>=parseInt(add.dataset.max,10))return;const row=rows[0].cloneNode(true);Array.from(row.querySelectorAll('input')).forEach(function(input){input.value='';});const remove=document.createElement('button');remove.type='button';remove.className='appy-remove-attendee';remove.textContent='Remove';remove.addEventListener('click',function(){row.remove();renumber();});row.insertBefore(remove,row.firstChild);wrap.appendChild(row);renumber();});
+ renumber();
 });
 </script>
 <?php return ob_get_clean();
