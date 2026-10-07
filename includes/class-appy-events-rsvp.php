@@ -17,8 +17,18 @@ class Appy_Events_RSVP {
         wp_enqueue_style('appy-events', APPY_EVENTS_URL . 'assets/css/appy-events.css', [], APPY_EVENTS_VERSION);
     }
 
+    private function is_builder_request() {
+        if (isset($_GET['elementor-preview']) || (isset($_REQUEST['action']) && 0 === strpos(sanitize_key(wp_unslash($_REQUEST['action'])), 'elementor'))) return true;
+        if (class_exists('\\Elementor\\Plugin')) {
+            $plugin = \\Elementor\\Plugin::$instance;
+            if (isset($plugin->editor) && method_exists($plugin->editor, 'is_edit_mode') && $plugin->editor->is_edit_mode()) return true;
+            if (isset($plugin->preview) && method_exists($plugin->preview, 'is_preview_mode') && $plugin->preview->is_preview_mode()) return true;
+        }
+        return false;
+    }
+
     public function append_to_event_content($content) {
-        if (!is_singular('appy_event') || !in_the_loop() || !is_main_query()) return $content;
+        if ($this->is_builder_request() || !is_singular('appy_event') || !in_the_loop() || !is_main_query()) return $content;
         if (has_shortcode($content, 'appy_event_rsvp')) return $content;
         if ('paid' === get_post_meta(get_the_ID(), '_appy_event_type', true)) return $content;
 
