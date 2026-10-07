@@ -1,0 +1,1 @@
+/* Appy Events public JavaScript. Reserved for progressive enhancements. */
