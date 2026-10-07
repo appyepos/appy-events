@@ -41,6 +41,10 @@ class Appy_Events_RSVP {
             return '<div class="appy-rsvp-notice is-error"><strong>' . esc_html__('This email address is already booked onto this event.', 'appy-events') . '</strong></div>';
         }
 
+        if (isset($_GET['appy_rsvp']) && 'full' === sanitize_key(wp_unslash($_GET['appy_rsvp']))) {
+            return '<div class="appy-rsvp-notice is-full"><strong>' . esc_html__('This event is full.', 'appy-events') . '</strong><span>' . esc_html__('There are currently no places available.', 'appy-events') . '</span></div>';
+        }
+
         if ($capacity && $count >= $capacity) {
             return '<div class="appy-rsvp-notice is-full"><strong>' . esc_html__('This event is full.', 'appy-events') . '</strong><span>' . esc_html__('There are currently no places available.', 'appy-events') . '</span></div>';
         }
@@ -102,7 +106,11 @@ class Appy_Events_RSVP {
         $inserted = Appy_Events_Attendees::add($event_id, $name, $email, 'rsvp');
         if (!$inserted) wp_die(esc_html__('We could not save your booking. Please try again.', 'appy-events'));
 
-        $this->send_confirmation($event_id, $name, $email);
+        if (Appy_Events_Settings::get('confirmation_email', 1)) $this->send_confirmation($event_id, $name, $email);
+        if (Appy_Events_Settings::get('notify_organiser', 1)) {
+            $to = Appy_Events_Settings::get('organiser_email', get_option('admin_email'));
+            if (is_email($to)) wp_mail($to, sprintf(__('New booking: %s', 'appy-events'), get_the_title($event_id)), sprintf(__("%s (%s) has booked onto %s.", 'appy-events'), $name, $email, get_the_title($event_id)));
+        }
 
         wp_safe_redirect(add_query_arg('appy_rsvp', 'success', $redirect));
         exit;
