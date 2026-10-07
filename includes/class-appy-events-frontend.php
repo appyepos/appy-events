@@ -167,7 +167,13 @@ class Appy_Events_Frontend {
 
         $title = isset($_POST['event_title']) ? sanitize_text_field(wp_unslash($_POST['event_title'])) : '';
         $start = isset($_POST['event_start']) ? sanitize_text_field(wp_unslash($_POST['event_start'])) : '';
+        $end = isset($_POST['event_end']) ? sanitize_text_field(wp_unslash($_POST['event_end'])) : '';
+        $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
         if (!$title || !$start) wp_die(esc_html__('Event name and start date are required.', 'appy-events'));
+        if ($end && strtotime($end) < strtotime($start)) {
+            $back = $event_id ? $this->dashboard_url(['appy_action'=>'edit','event_id'=>$event_id]) : $this->dashboard_url(['appy_action'=>'add']);
+            wp_safe_redirect(add_query_arg('appy_error', __('End date and time cannot be earlier than the start date and time.','appy-events'), $back)); exit;
+        }
 
         $post_data = [
             'post_type' => 'appy_event',
@@ -181,7 +187,7 @@ class Appy_Events_Frontend {
         if (is_wp_error($saved_id)) wp_die(esc_html($saved_id->get_error_message()));
 
         update_post_meta($saved_id, '_appy_event_start', $start);
-        update_post_meta($saved_id, '_appy_event_end', isset($_POST['event_end']) ? sanitize_text_field(wp_unslash($_POST['event_end'])) : '');
+        update_post_meta($saved_id, '_appy_event_end', $end);
         update_post_meta($saved_id, '_appy_event_location', isset($_POST['event_location']) ? sanitize_text_field(wp_unslash($_POST['event_location'])) : '');
         $capacity = isset($_POST['event_capacity']) ? absint($_POST['event_capacity']) : 0;
         update_post_meta($saved_id, '_appy_event_capacity', $capacity ?: '');
@@ -203,7 +209,6 @@ class Appy_Events_Frontend {
             if (!is_wp_error($attachment_id)) set_post_thumbnail($saved_id, $attachment_id);
         }
 
-        $return = isset($_POST['return_url']) ? esc_url_raw(wp_unslash($_POST['return_url'])) : home_url('/');
         if ('paid' === $type && empty($tickets)) {
             wp_safe_redirect(add_query_arg('appy_error', rawurlencode(__('Paid events require at least one ticket type.','appy-events')), $this->dashboard_url(['appy_action'=>'edit','event_id'=>$saved_id]))); exit;
         }
