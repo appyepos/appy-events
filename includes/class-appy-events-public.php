@@ -18,18 +18,34 @@ class Appy_Events_Public {
   <?php } wp_reset_postdata(); echo '</div>'; return ob_get_clean();
  }
  public function event_content($content){
-  if(!is_singular('appy_event')||!in_the_loop()||!is_main_query()) return $content; $id=get_the_ID();
-  $start=get_post_meta($id,'_appy_event_start',true); $cancelled=Appy_Events_Operations::cancelled($id); $past=Appy_Events_Operations::is_past($id); $end=get_post_meta($id,'_appy_event_end',true); $loc=get_post_meta($id,'_appy_event_location',true); $cap=absint(get_post_meta($id,'_appy_event_capacity',true)); $n=Appy_Events_Attendees::count($id);
-  ob_start(); ?><div class="appy-event-public"><?php if(has_post_thumbnail()): ?><div class="appy-event-hero"><?php the_post_thumbnail('large'); ?></div><?php endif; ?>
-  <?php if($cancelled): ?><div class="appy-rsvp-notice is-full appy-event-state"><strong><?php esc_html_e('This event has been cancelled.','appy-events'); ?></strong></div><?php elseif($past): ?><div class="appy-rsvp-notice appy-event-state"><strong><?php esc_html_e('This event has finished.','appy-events'); ?></strong></div><?php endif; ?><div class="appy-event-facts"><div><strong><?php esc_html_e('When','appy-events'); ?></strong><span><?php echo esc_html($this->fmt($start)); ?><?php if($end) echo ' – '.esc_html($this->fmt($end)); ?></span></div>
-  <?php if($loc): ?><div><strong><?php esc_html_e('Where','appy-events'); ?></strong><span><?php echo esc_html($loc); ?></span></div><?php endif; ?>
-  <div><strong><?php esc_html_e('Availability','appy-events'); ?></strong><span><?php echo esc_html($cap?sprintf(__('%d places left','appy-events'),max(0,$cap-$n)):__('Unlimited places','appy-events')); ?></span></div></div></div><?php
-  $before=ob_get_clean();
-  if (!$cancelled && !$past && 'paid' === get_post_meta($id,'_appy_event_type',true) && Appy_Events_WooCommerce::available()) {
-   $pid=absint(get_post_meta($id,'_appy_event_product_id',true)); $price=get_post_meta($id,'_appy_event_price',true);
-   if($pid && (!$cap || $n<$cap)) $content .= '<div class="appy-paid-ticket"><span class="appy-events-kicker">'.esc_html__('Paid event','appy-events').'</span><h3>'.esc_html__('Book your ticket','appy-events').'</h3><strong>'.wp_kses_post(wc_price($price)).'</strong><a class="appy-events-button" href="'.esc_url(add_query_arg('add-to-cart',$pid,wc_get_cart_url())).'">'.esc_html__('Buy ticket','appy-events').'</a></div>';
-   elseif($cap && $n >= $cap) $content .= '<div class="appy-rsvp-notice is-full"><strong>'.esc_html__('This event is sold out.','appy-events').'</strong></div>';
-  }
-  return $before.$content;
+  if(!is_singular('appy_event')||!in_the_loop()||!is_main_query()) return $content;
+  $id=get_the_ID(); $start=get_post_meta($id,'_appy_event_start',true); $end=get_post_meta($id,'_appy_event_end',true); $loc=get_post_meta($id,'_appy_event_location',true);
+  $cap=absint(get_post_meta($id,'_appy_event_capacity',true)); $n=Appy_Events_Attendees::count($id); $cancelled=Appy_Events_Operations::cancelled($id); $past=Appy_Events_Operations::is_past($id); $type=get_post_meta($id,'_appy_event_type',true)?:'free';
+  ob_start(); ?>
+  <div class="appy-single-event">
+   <div class="appy-single-main">
+    <?php if(has_post_thumbnail()): ?><div class="appy-event-hero"><?php the_post_thumbnail('large'); ?></div><?php endif; ?>
+    <div class="appy-event-facts">
+     <div><strong><?php esc_html_e('When','appy-events'); ?></strong><span><?php echo esc_html($this->fmt($start)); ?><?php if($end) echo ' – '.esc_html($this->fmt($end)); ?></span></div>
+     <?php if($loc): ?><div><strong><?php esc_html_e('Where','appy-events'); ?></strong><span><?php echo esc_html($loc); ?></span></div><?php endif; ?>
+     <div><strong><?php esc_html_e('Availability','appy-events'); ?></strong><span><?php echo esc_html($cap?sprintf(__('%d places left','appy-events'),max(0,$cap-$n)):__('Unlimited places','appy-events')); ?></span></div>
+    </div>
+    <div class="appy-event-description"><?php echo $content; ?></div>
+   </div>
+   <aside class="appy-single-booking">
+    <?php if($cancelled): ?><div class="appy-rsvp-notice is-full"><strong><?php esc_html_e('This event has been cancelled.','appy-events'); ?></strong></div>
+    <?php elseif($past): ?><div class="appy-rsvp-notice"><strong><?php esc_html_e('This event has finished.','appy-events'); ?></strong></div>
+    <?php elseif('paid'===$type && Appy_Events_WooCommerce::available()): $types=Appy_Events_Tickets::get($id); ?>
+      <div class="appy-paid-ticket"><span class="appy-events-kicker"><?php esc_html_e('Tickets','appy-events'); ?></span><h3><?php esc_html_e('Book your tickets','appy-events'); ?></h3>
+      <?php foreach($types as $i=>$ticket): $pid=absint($ticket['product_id']??0); if(!$pid) continue; $tcap=absint($ticket['capacity']??0); $booked=$tcap?Appy_Events_Tickets::booked($id,$i):0; $left=$tcap?max(0,$tcap-$booked):99; ?>
+       <form class="appy-ticket-row" method="get" action="<?php echo esc_url(wc_get_cart_url()); ?>"><input type="hidden" name="add-to-cart" value="<?php echo esc_attr($pid); ?>">
+        <div><strong><?php echo esc_html($ticket['name']); ?></strong><span><?php echo wp_kses_post(wc_price($ticket['price'])); ?><?php if($tcap): ?> · <?php echo esc_html(sprintf(__('%d left','appy-events'),$left)); ?><?php endif; ?></span></div>
+        <?php if($left>0): ?><div class="appy-ticket-buy"><label><?php esc_html_e('Qty','appy-events'); ?><input type="number" name="quantity" min="1" max="<?php echo esc_attr(min(10,$left)); ?>" value="1"></label><button class="appy-events-button" type="submit"><?php esc_html_e('Add','appy-events'); ?></button></div><?php else: ?><span class="appy-sold-out"><?php esc_html_e('Sold out','appy-events'); ?></span><?php endif; ?>
+       </form>
+      <?php endforeach; ?></div>
+    <?php else: echo do_shortcode('[appy_event_rsvp id="'.$id.'"]'); endif; ?>
+   </aside>
+  </div>
+  <?php return ob_get_clean();
  }
 }
