@@ -205,3 +205,25 @@
  .appy-add-attendee-grid .appy-events-button{width:100%}
  .appy-attendee-table{min-width:620px}
 }
+
+
+/* Public RSVP */
+.appy-rsvp-box { max-width:720px; padding:24px; border:1px solid #e3e5e8; border-radius:10px; background:#fff; color:#161b22; }
+.appy-rsvp-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:20px; }
+.appy-rsvp-heading h3 { margin:2px 0 5px; font-size:24px; }
+.appy-rsvp-heading p { margin:0; color:#667085; }
+.appy-rsvp-places { min-width:84px; padding:10px 12px; border-radius:8px; background:#f6f7f8; text-align:center; }
+.appy-rsvp-places strong,.appy-rsvp-places span { display:block; }
+.appy-rsvp-places strong { font-size:22px; line-height:1; }
+.appy-rsvp-places span { margin-top:4px; color:#667085; font-size:11px; }
+.appy-rsvp-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.appy-events-rsvp p { margin:0; }
+.appy-events-rsvp label { display:block; margin-bottom:6px; font-weight:700; }
+.appy-events-rsvp input[type="text"],.appy-events-rsvp input[type="email"] { box-sizing:border-box; width:100%; min-height:46px; padding:10px 12px; border:1px solid #cfd4dc; border-radius:7px; font:inherit; }
+.appy-rsvp-button { width:100%; min-height:48px; margin-top:16px; padding:10px 16px; border:0; border-radius:7px; background:#161b22; color:#fff; font:inherit; font-weight:700; cursor:pointer; }
+.appy-rsvp-small { margin-top:10px!important; color:#667085; font-size:12px; text-align:center; }
+.appy-rsvp-success,.appy-rsvp-notice { max-width:720px; padding:18px 20px; border:1px solid #b8dfc2; border-radius:10px; background:#effaf2; color:#176b2c; }
+.appy-rsvp-success strong,.appy-rsvp-success span,.appy-rsvp-notice strong,.appy-rsvp-notice span { display:block; }
+.appy-rsvp-success span,.appy-rsvp-notice span { margin-top:4px; }
+.appy-rsvp-notice.is-error,.appy-rsvp-notice.is-full { border-color:#e6b8b8; background:#fff3f3; color:#8a2424; }
+@media(max-width:700px){ .appy-rsvp-fields{grid-template-columns:1fr}.appy-rsvp-heading{display:block}.appy-rsvp-places{display:inline-block;margin-top:14px} }
